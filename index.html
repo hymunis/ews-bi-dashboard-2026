@@ -6,6 +6,7 @@
 <title>Dashboard EWS Komunikasi BI — April 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --bi-red:#B5122A; --bi-red-dark:#7A0B1C; --bi-red-light:#D42040;
@@ -233,6 +234,30 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 .footer{background:#1A3A5C;color:rgba(255,255,255,.55);text-align:center;padding:14px;font-size:10px;margin-top:32px}
 
 @media(max-width:900px){.g3,.g4,.gauge-row{grid-template-columns:1fr}.g2,.g12{grid-template-columns:1fr}.container{padding:14px}}
+
+/* ── UPLOAD UI ── */
+.ews-upload-card{background:linear-gradient(135deg,#1A3A5C,#0D2035);border:2px dashed rgba(255,255,255,0.22);border-radius:14px;padding:20px 22px;margin-bottom:20px;transition:all .3s;}
+.ews-upload-card.drag-over{border-color:rgba(255,255,255,0.7);background:linear-gradient(135deg,#1E4570,#122740);}
+.ews-upload-card.activated{border-color:#4CAF50;border-style:solid;}
+.upload-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.upload-icon-lg{font-size:38px;flex-shrink:0;line-height:1;}
+.upload-title{font-size:14px;font-weight:700;color:white;margin-bottom:5px;}
+.upload-sub{font-size:11px;color:rgba(255,255,255,0.6);line-height:1.6;max-width:440px;}
+.upload-btns{display:flex;gap:10px;margin-left:auto;flex-shrink:0;flex-wrap:wrap;}
+.btn-upload{background:#B5122A;color:white;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.btn-upload:hover{background:#D42040;}
+.btn-tmpl{background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.28);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.btn-tmpl:hover{background:rgba(255,255,255,0.2);}
+.ews-upload-status{display:none;margin-top:10px;padding:8px 14px;border-radius:8px;font-size:12px;line-height:1.5;}
+.upload-loading{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.75);}
+.upload-ok{background:rgba(76,175,80,0.18);color:#81C784;border:1px solid rgba(76,175,80,0.3);}
+.upload-error{background:rgba(244,67,54,0.18);color:#EF9A9A;border:1px solid rgba(244,67,54,0.3);}
+.ews-file-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.82);}
+.ews-file-chip span{color:rgba(255,255,255,0.45);font-size:9px;}
+.chip-err{color:#EF9A9A;border-color:rgba(244,67,54,0.3);}
+.sheet-pills{margin-top:12px;display:flex;gap:7px;flex-wrap:wrap;}
+.sheet-pill{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:6px;padding:4px 10px;font-size:10px;color:rgba(255,255,255,0.65);}
+.sheet-pill strong{color:rgba(255,255,255,0.9);}
 </style>
 </head>
 <body>
@@ -266,7 +291,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
     </div>
   </div>
   <div>
-    <div class="period-badge">📅 Periode Pemantauan: April 2026</div>
+    <div class="period-badge" id="period-badge">📅 Periode Pemantauan: April 2026</div>
     <div class="header-sub">SESMUBI Angkatan 14 — Kelompok 14 &nbsp;|&nbsp; No Limit Indonesia × Sentrix Telkomsel</div>
   </div>
 </div>
@@ -284,9 +309,34 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 <div id="tab-overview" class="tab-panel active">
 <div class="container">
 
+  <!-- ── EWS UPLOAD CARD ── -->
+  <div id="ews-upload-card" class="ews-upload-card" style="margin-top:18px">
+    <div class="upload-row">
+      <div class="upload-icon-lg">📊</div>
+      <div>
+        <div class="upload-title">Aktivasi Dashboard dengan Data Excel Anda</div>
+        <div class="upload-sub">Upload satu atau lebih file Excel (multi-file). Dashboard akan otomatis memuat data IIRS, keyword, dan narasi sesuai data aktual periode baru.</div>
+      </div>
+      <div class="upload-btns">
+        <input type="file" id="ews-file-input" multiple accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(this.files)">
+        <button class="btn-upload" onclick="document.getElementById('ews-file-input').click()">📂 Pilih File Excel</button>
+        <button class="btn-tmpl" onclick="downloadTemplate()">⬇ Download Template</button>
+      </div>
+    </div>
+    <div id="ews-upload-status" class="ews-upload-status"></div>
+    <div id="ews-file-list" style="display:none;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
+    <div class="sheet-pills">
+      <span class="sheet-pill"><strong>INFO</strong> — Periode &amp; Bobot Vendor</span>
+      <span class="sheet-pill"><strong>SOURCE_SCORE</strong> — KLASTER · VENDOR · NS · VA · ER</span>
+      <span class="sheet-pill"><strong>KEYWORD</strong> — KLASTER · KEYWORD · FREKUENSI</span>
+      <span class="sheet-pill"><strong>NARASI</strong> — KLASTER · TEKS</span>
+      <span class="sheet-pill"><strong>DATASET</strong> — KLASTER · VENDOR · JUMLAH</span>
+    </div>
+  </div>
+
   <!-- EXECUTIVE BRIEF PARAGRAPH -->
   <div class="section-title" style="margin-top:18px">Ringkasan Eksekutif — Kondisi &amp; Rekomendasi Tindak Lanjut</div>
-  <div class="card" style="border-left:4px solid var(--bi-navy);padding:16px 20px;background:linear-gradient(135deg,#F7F9FC,#EEF3FA)">
+  <div id="ews-exec-para" class="card" style="border-left:4px solid var(--bi-navy);padding:16px 20px;background:linear-gradient(135deg,#F7F9FC,#EEF3FA)">
     <p style="font-size:12.5px;line-height:1.9;color:var(--text);margin:0">
       Per <strong>April 2026</strong>, sistem EWS Komunikasi Kebijakan Bank Indonesia mencatat bahwa dari tiga klaster isu yang dipantau, <strong>dua klaster — Rupiah (IIRS 47,28) dan BI-Rate (IIRS 37,42) — berada pada Tier 2 Sedang</strong> dengan SLA respons 12 jam, sementara Inflasi masih terkendali di Tier 1 Ringan (IIRS 33,26). Kondisi paling kritis ditunjukkan oleh Klaster Rupiah yang hanya berjarak <strong>2,72 poin dari ambang Siaga (50)</strong>, dengan ER Sentrix sudah mencapai saturasi 100% — mengindikasikan jangkauan eksternal yang sudah maksimal dan risiko eskalasi sangat tinggi apabila sentimen negatif bertambah. Klaster BI-Rate turut mencatat ER 100% sehingga setiap peningkatan Negative Sentiment akan langsung mendorong IIRS naik tanpa buffer. Inflasi, meski masih di Tier 1, perlu diwaspadai karena Volume Anomaly Sentrix mencapai 58%, yang merupakan leading indicator potensi lonjakan. Data bersumber dari <strong>41.129 konten</strong> yang dipantau selama April 2026 dari dua vendor (NoLimit Indonesia sebagai Kanal BI berbobot 40%, Sentrix Telkomsel sebagai Non-Kanal BI berbobot 60%). <strong>Rekomendasi:</strong> Aktivasi <em>joint issue brief</em> segera untuk Rupiah dan BI-Rate, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, intensifikasi konten di seluruh kanal BI, serta pemantauan ketat threshold Siaga Rupiah sebelum RDG berikutnya.
     </p>
@@ -295,12 +345,12 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   <!-- IIRS SUMMARY + GAUGE INTEGRATED -->
   <div class="section-title">Skor IIRS &amp; Posisi Tier</div>
   <!-- Dataset stats bar -->
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--muted)">
+  <div id="ews-dataset-bar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--muted)">
     <span style="background:#F0F4F8;border:1px solid var(--border);border-radius:6px;padding:4px 10px"><strong style="color:var(--bi-navy)">41.129</strong> total konten dipantau</span>
     <span style="background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:4px 10px"><strong style="color:#9B1C1C">NoLimit (Kanal BI)</strong>: 3.167 konten — Rupiah 2.874 · Inflasi 242 · BI-Rate 51</span>
     <span style="background:#EBF5FB;border:1px solid #85C1E9;border-radius:6px;padding:4px 10px"><strong style="color:#1A5276">Sentrix (Non-Kanal BI)</strong>: 37.962 konten — Rupiah 15.167 · Inflasi 17.421 · BI-Rate 5.374</span>
   </div>
-  <div class="g3">
+  <div id="ews-iirs-grid" class="g3">
     <div class="iirs-card sedang" style="display:flex;align-items:center;gap:10px;overflow:visible">
       <div style="flex:1;min-width:0">
         <div class="isu-label">🏦 Klaster: Rupiah</div>
@@ -334,7 +384,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   <div class="card" style="margin-top:14px">
     <div class="card-title">Skala IIRS — Posisi Klaster pada Kontinum Risiko</div>
     <div class="scale-bar-wrap">
-      <div class="scale-bar">
+      <div id="ews-scale-inner" class="scale-bar">
         <div class="zone-line" style="left:35%"><span class="scale-line-label">35</span></div>
         <div class="zone-line" style="left:50%"><span class="scale-line-label">50</span></div>
         <div class="zone-line" style="left:60%"><span class="scale-line-label">60</span></div>
@@ -369,7 +419,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 
   <!-- SITUASI SAAT INI -->
   <div class="section-title">Situasi Saat Ini — Sinyal Strategis Lintas Klaster</div>
-  <div class="g3">
+  <div id="ews-signal-grid" class="g3">
     <div class="signal-card warn">
       <div class="stitle">⚠️ Rupiah Mendekati Ambang Siaga</div>
       <div class="sbody">IIRS 47,28 — hanya 2,72 poin dari Siaga (50). ER Sentrix sudah jenuh di 100%. Setiap kenaikan NS akan langsung berdampak signifikan pada IIRS. Perlu respons proaktif sekarang.</div>
@@ -398,7 +448,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 
   <!-- LANGKAH AKTIF / ACTIVE PROTOCOL -->
   <div class="section-title">Langkah Aktif — Protokol Respons Berdasarkan Hasil IIRS</div>
-  <div class="g2">
+  <div id="ews-proto-grid" class="g2">
 
     <!-- TIER 2 ACTIVE -->
     <div class="active-proto tier2">
@@ -484,8 +534,8 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   <p style="font-size:10px;color:var(--muted);text-align:right;margin-bottom:4px">Sumber: NLI Dataset (Kanal BI) &amp; ST Dataset (Non-Kanal BI) — AI Recheck Sentimen: Negatif | April 2026</p>
 
   <!-- SOURCE SCORE — OVERVIEW (bottom) -->
-  <div class="section-title" style="margin-top:28px">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
-  <div class="g12">
+  <div class="section-title" style="margin-top:28px" id="ews-score-section-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
+  <div class="g12" id="ews-g12-ov">
     <div>
       <div class="formula-box">
         <div class="ft">Formula IIRS &amp; Source Score</div>
@@ -569,7 +619,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 
   <!-- SOURCE SCORE -->
   <div class="section-title">Source Score per Vendor — Bobot IIRS</div>
-  <div class="g12">
+  <div class="g12" id="ews-g12-an">
     <div>
       <div class="formula-box">
         <div class="ft">Formula IIRS &amp; Source Score</div>
@@ -1104,6 +1154,368 @@ function copyPrompt() {
 document.getElementById('aiOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeAI();
 });
+
+/* ═══════════════════════════════════════════════════════════
+   LIVE DATA ENGINE — Upload Excel & Re-render Dashboard
+   ═══════════════════════════════════════════════════════════ */
+
+const KL = {
+  'Rupiah':  { emoji:'🏦', key:'rupiah',  canvasId:'gaugeRupiah',  wcId:'wcRupiah',  narId:'narasi-rupiah',  col:'#2C3E50', wcc:['#E74C3C','#C0392B','#E67E22','#2C3E50','#7F8C8D'] },
+  'Inflasi': { emoji:'📈', key:'inflasi', canvasId:'gaugeInflasi', wcId:'wcInflasi', narId:'narasi-inflasi', col:'#27AE60', wcc:['#27AE60','#1E8449','#F39C12','#2C3E50','#7F8C8D'] },
+  'BI-Rate': { emoji:'🏛️', key:'birate',  canvasId:'gaugeBIRate',  wcId:'wcBIRate',  narId:'narasi-birate',  col:'#888',    wcc:['#2980B9','#1A5276','#8E44AD','#2C3E50','#7F8C8D'] }
+};
+
+function calcSS(ns,va,er){ return +(100*(0.4*ns+0.3*va+0.3*er)).toFixed(2); }
+function calcIIRS(nlS,sxS,bNL,bSX){ return +(bNL*nlS+bSX*sxS).toFixed(2); }
+function fmt(n){ return String(n.toFixed(2)).replace('.',','); }
+function fmtN(n){ return Number(n).toLocaleString('id-ID'); }
+function getTier(v){
+  if(v<36) return {cls:'ringan',emoji:'✅',label:'TIER 1 — RINGAN',sla:'24',panduan:'1'};
+  if(v<50) return {cls:'sedang',emoji:'⚠️',label:'TIER 2 — SEDANG',sla:'12',panduan:'2'};
+  if(v<60) return {cls:'siaga', emoji:'🚨',label:'TIER 2 — SIAGA', sla:'6', panduan:'2 (Siaga)'};
+  return         {cls:'crisis',emoji:'🔴',label:'TIER 3 — CRISIS',sla:'3', panduan:'3'};
+}
+
+/* ── Sheet parsers ────────────────────────────────── */
+function shR(sheet){ return XLSX.utils.sheet_to_json(sheet,{header:1,defval:''}); }
+function nk(s){ return String(s).trim().toUpperCase().replace(/[-\s]+/g,'_'); }
+
+function parseINFO(sh){
+  const m={};
+  shR(sh).slice(1).forEach(r=>{ if(r[0]) m[nk(r[0])]=String(r[1]||'').trim(); });
+  return { periode:m.PERIODE||m.PERIOD||'N/A', bNL:parseFloat(m.BOBOT_NOLIMIT||m.BOBOT_NL||0.4), bSX:parseFloat(m.BOBOT_SENTRIX||m.BOBOT_SX||0.6) };
+}
+
+function parseSOURCE_SCORE(sh,bNL,bSX){
+  const rows=shR(sh), h=rows[0].map(nk);
+  const [iK,iV,iN,iVA,iER]=[h.indexOf('KLASTER'),h.indexOf('VENDOR'),h.indexOf('NS'),h.indexOf('VA'),h.indexOf('ER')];
+  const g={};
+  rows.slice(1).forEach(r=>{
+    const k=String(r[iK]||'').trim(); if(!k) return;
+    const v=nk(r[iV]||''), ns=parseFloat(r[iN]||0), va=parseFloat(r[iVA]||0), er=parseFloat(r[iER]||0);
+    if(!g[k]) g[k]={};
+    const vk=(v.includes('NOLIMIT')||v.includes('NO_LIMIT')||v==='NL')?'nl':'sx';
+    g[k][vk]={ns,va,er,score:calcSS(ns,va,er)};
+  });
+  const result={};
+  Object.entries(g).forEach(([k,vd])=>{
+    const nl=vd.nl||{ns:0,va:0,er:0,score:0}, sx=vd.sx||{ns:0,va:0,er:0,score:0};
+    const iirs=calcIIRS(nl.score,sx.score,bNL,bSX);
+    result[k]={nl,sx,iirs,tier:getTier(iirs)};
+  });
+  return result;
+}
+
+function parseKEYWORD(sh){
+  const rows=shR(sh), h=rows[0].map(nk);
+  const iK=h.indexOf('KLASTER'), iW=h.indexOf('KEYWORD')!==-1?h.indexOf('KEYWORD'):h.indexOf('KATA'), iF=h.indexOf('FREKUENSI')!==-1?h.indexOf('FREKUENSI'):h.indexOf('FREQ');
+  const g={'Rupiah':[],'Inflasi':[],'BI-Rate':[]};
+  rows.slice(1).forEach(r=>{
+    const kl=String(r[iK]||'').trim(), kw=String(r[iW]||'').trim().toLowerCase(), f=parseFloat(r[iF]||0);
+    if(!kw||!f) return;
+    const key=Object.keys(g).find(k=>kl.toLowerCase()===k.toLowerCase()||kl.toLowerCase().includes(k.toLowerCase().replace('-','').replace('rate','')))||null;
+    if(key) g[key].push([kw,f]);
+  });
+  Object.keys(g).forEach(k=>g[k].sort((a,b)=>b[1]-a[1]));
+  return g;
+}
+
+function parseNARASI(sh){
+  const rows=shR(sh), h=rows[0].map(nk);
+  const iK=h.indexOf('KLASTER'), iT=h.indexOf('TEKS')!==-1?h.indexOf('TEKS'):h.indexOf('TEXT');
+  const g={'Rupiah':[],'Inflasi':[],'BI-Rate':[]};
+  rows.slice(1).forEach(r=>{
+    const kl=String(r[iK]||'').trim(), t=String(r[iT]||'').trim(); if(!kl||!t) return;
+    const key=Object.keys(g).find(k=>kl.toLowerCase()===k.toLowerCase()||kl.toLowerCase().includes(k.toLowerCase().replace('-','').replace('rate','')))||null;
+    if(key) g[key].push(t);
+  });
+  return g;
+}
+
+function parseDATASET(sh){
+  const rows=shR(sh), h=rows[0].map(nk);
+  const iK=h.indexOf('KLASTER'), iV=h.indexOf('VENDOR'), iJ=h.indexOf('JUMLAH')!==-1?h.indexOf('JUMLAH'):h.indexOf('COUNT');
+  const r={};
+  rows.slice(1).forEach(row=>{
+    const k=String(row[iK]||'').trim(), v=nk(row[iV]||''), j=parseInt(row[iJ]||0);
+    if(!k||!j) return;
+    if(!r[k]) r[k]={};
+    r[k][(v.includes('NOLIMIT')||v.includes('NO_LIMIT')||v==='NL')?'nl':'sx']=j;
+  });
+  return r;
+}
+
+/* ── Render functions ─────────────────────────────── */
+function rnPeriod(p){
+  const el=document.getElementById('period-badge'); if(el) el.textContent=`📅 Periode Pemantauan: ${p}`;
+  const t=document.getElementById('ews-score-section-title');
+  if(t) t.textContent=`Hasil Perhitungan Source Score per Vendor (${p})`;
+}
+
+function rnDatasetBar(ds){
+  const el=document.getElementById('ews-dataset-bar'); if(!el) return;
+  const kls=['Rupiah','Inflasi','BI-Rate'];
+  let tNL=0,tSX=0;
+  kls.forEach(k=>{ tNL+=(ds[k]||{}).nl||0; tSX+=(ds[k]||{}).sx||0; });
+  const nlD=kls.map(k=>`${k} ${fmtN((ds[k]||{}).nl||0)}`).join(' · ');
+  const sxD=kls.map(k=>`${k} ${fmtN((ds[k]||{}).sx||0)}`).join(' · ');
+  el.innerHTML=`
+    <span style="background:#F0F4F8;border:1px solid var(--border);border-radius:6px;padding:4px 10px"><strong style="color:var(--bi-navy)">${fmtN(tNL+tSX)}</strong> total konten dipantau</span>
+    <span style="background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:4px 10px"><strong style="color:#9B1C1C">NoLimit (Kanal BI)</strong>: ${fmtN(tNL)} konten — ${nlD}</span>
+    <span style="background:#EBF5FB;border:1px solid #85C1E9;border-radius:6px;padding:4px 10px"><strong style="color:#1A5276">Sentrix (Non-Kanal BI)</strong>: ${fmtN(tSX)} konten — ${sxD}</span>`;
+}
+
+function rnIIRSGrid(sc){
+  const el=document.getElementById('ews-iirs-grid'); if(!el) return;
+  el.innerHTML=Object.entries(KL).map(([k,m])=>{
+    const s=sc[k]; if(!s) return '';
+    return `<div class="iirs-card ${s.tier.cls}" style="display:flex;align-items:center;gap:10px;overflow:visible">
+      <div style="flex:1;min-width:0">
+        <div class="isu-label">${m.emoji} Klaster: ${k}</div>
+        <div class="score">${fmt(s.iirs)}</div>
+        <div class="tier-badge">${s.tier.emoji} ${s.tier.label}</div>
+        <div class="protocol">Tindak Lanjut: <span>Panduan Respons ${s.tier.panduan}</span></div>
+      </div>
+      <canvas id="${m.canvasId}" width="160" height="100" style="flex-shrink:0"></canvas>
+    </div>`;
+  }).join('');
+  setTimeout(()=>Object.entries(KL).forEach(([k,m])=>{ if(sc[k]) drawGauge(m.canvasId,sc[k].iirs); }),60);
+}
+
+function rnScaleBar(sc){
+  const el=document.getElementById('ews-scale-inner'); if(!el) return;
+  const cfg=[{k:'Rupiah',col:'#2C3E50',top:0,h:44},{k:'Inflasi',col:'#27AE60',top:8,h:36},{k:'BI-Rate',col:'#888',top:4,h:40}];
+  const lines=`<div class="zone-line" style="left:35%"><span class="scale-line-label">35</span></div>
+    <div class="zone-line" style="left:50%"><span class="scale-line-label">50</span></div>
+    <div class="zone-line" style="left:60%"><span class="scale-line-label">60</span></div>`;
+  const markers=cfg.map(c=>{
+    const s=sc[c.k]; if(!s) return '';
+    const pct=s.iirs.toFixed(2), tS=c.top?`top:${c.top}px`:'', lS=c.top?`top:-${28+c.top}px`:'';
+    return `<div class="scale-marker" style="left:${pct}%;${tS}">
+      <div class="mlabel" style="background:${c.col};${lS}">${c.k} ${fmt(s.iirs)}</div>
+      <div class="needle" style="height:${c.h}px;background:${c.col}"></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=lines+markers;
+}
+
+function rnExecPara(sc,p){
+  const el=document.getElementById('ews-exec-para'); if(!el) return;
+  const kls=Object.entries(sc), r=sc.Rupiah, i=sc.Inflasi;
+  const sedang=kls.filter(([,s])=>['sedang','siaga'].includes(s.tier.cls));
+  const ringan=kls.filter(([,s])=>s.tier.cls==='ringan');
+  const top=[...kls].sort((a,b)=>b[1].iirs-a[1].iirs)[0];
+  let t=`Per <strong>${p}</strong>, sistem EWS Komunikasi Kebijakan Bank Indonesia mencatat bahwa dari tiga klaster isu yang dipantau,`;
+  if(sedang.length) t+=` <strong>${sedang.map(([k,s])=>`${KL[k]?.emoji||''} ${k} (IIRS ${fmt(s.iirs)})`).join(' dan ')} — berada pada ${sedang[0][1].tier.label}</strong> dengan SLA ${sedang[0][1].tier.sla} jam,`;
+  if(ringan.length) t+=` sementara ${ringan.map(([k,s])=>`${k} (IIRS ${fmt(s.iirs)})`).join(', ')} terkendali di Tier 1 Ringan.`;
+  if(r&&top[0]==='Rupiah'){ const gap=(50-r.iirs).toFixed(2).replace('.',','); t+=` Kondisi paling kritis: Klaster Rupiah hanya berjarak <strong>${gap} poin dari ambang Siaga (50)</strong>`+(r.sx.er>=0.95?`, ER Sentrix jenuh ${(r.sx.er*100).toFixed(0)}%`:'')+'.'; }
+  if(i&&i.sx.va>=0.4) t+=` Inflasi perlu diwaspadai: VA Sentrix ${(i.sx.va*100).toFixed(0)}% merupakan leading indicator potensi lonjakan.`;
+  t+=` <strong>Rekomendasi:</strong> Aktivasi <em>joint issue brief</em> segera untuk ${sedang.map(([k])=>k).join(' dan ')}, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, dan intensifikasi konten di seluruh kanal BI.`;
+  el.innerHTML=`<p style="font-size:12.5px;line-height:1.9;color:var(--text);margin:0">${t}</p>`;
+}
+
+function rnSourceScoreTable(sc){
+  ['ews-g12-ov','ews-g12-an'].forEach(gid=>{
+    const g=document.getElementById(gid); if(!g) return;
+    const tb=g.querySelector('tbody'); if(!tb) return;
+    tb.innerHTML=Object.entries(KL).map(([k,m])=>{
+      const s=sc[k]; if(!s) return '';
+      return `<tr>
+        <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">${m.emoji} ${k}</td>
+        <td><span class="vtag nl">NoLimit</span></td>
+        <td style="text-align:center">${s.nl.ns.toFixed(3)}</td><td style="text-align:center">${s.nl.va.toFixed(3)}</td><td style="text-align:center">${s.nl.er.toFixed(3)}</td>
+        <td style="text-align:center"><span class="score-badge ${s.nl.score>=36?'badge-s':'badge-r'}">${fmt(s.nl.score)}</span></td>
+        <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:${Math.min(s.nl.score,100)}%"></div></div></td>
+      </tr><tr>
+        <td><span class="vtag sx">Sentrix</span></td>
+        <td style="text-align:center">${s.sx.ns.toFixed(3)}</td><td style="text-align:center">${s.sx.va.toFixed(3)}</td><td style="text-align:center">${s.sx.er.toFixed(3)}</td>
+        <td style="text-align:center"><span class="score-badge ${s.sx.score>=36?'badge-s':'badge-r'}">${fmt(s.sx.score)}</span></td>
+        <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:${Math.min(s.sx.score,100)}%"></div></div></td>
+      </tr><tr style="border-top:2px solid var(--border)"><td colspan="7" style="padding:2px 0"></td></tr>`;
+    }).join('');
+  });
+}
+
+function rnSignalGrid(sc){
+  const el=document.getElementById('ews-signal-grid'); if(!el) return;
+  const cards=[];
+  Object.entries(sc).forEach(([k,s])=>{
+    const m=KL[k]; if(!m) return;
+    if(['siaga','crisis'].includes(s.tier.cls)) cards.push({t:'warn',title:`🚨 ${k}: Masuk Zona ${s.tier.cls==='crisis'?'Crisis':'Siaga'}!`,body:`IIRS ${fmt(s.iirs)} melewati threshold kritis. Aktivasi protokol eskalasi segera diperlukan.`});
+    else if(s.tier.cls==='sedang'&&s.iirs>=47) cards.push({t:'warn',title:`⚠️ ${k} Mendekati Ambang Siaga`,body:`IIRS ${fmt(s.iirs)} — hanya ${fmt(50-s.iirs)} poin dari Siaga (50). ER Sentrix jenuh. Perlu respons proaktif segera.`});
+    else if(s.tier.cls==='sedang') cards.push({t:'warn',title:`⚠️ ${k}: Tier 2 Sedang — Pantau Ketat`,body:`IIRS ${fmt(s.iirs)} dalam zona Sedang. NS Sentrix ${(s.sx.ns*100).toFixed(1)}%, VA ${(s.sx.va*100).toFixed(1)}%.`});
+    if(s.sx.va>=0.5) cards.push({t:'warn',title:`⚠️ ${k}: Volume Anomaly ${(s.sx.va*100).toFixed(0)}%`,body:`Leading indicator potensi lonjakan IIRS. Pantau perkembangan periode berikutnya.`});
+    if(Math.abs(s.nl.score-s.sx.score)>15) cards.push({t:'info',title:`📊 ${k}: Gap Dua Kanal ${Math.abs(s.nl.score-s.sx.score).toFixed(0)} Poin`,body:`NoLimit ${fmt(s.nl.score)} vs Sentrix ${fmt(s.sx.score)}. Strategi bridging edukatif diperlukan untuk menjembatani persepsi.`});
+  });
+  if(!Object.values(sc).some(s=>['siaga','crisis'].includes(s.tier.cls))) cards.push({t:'ok',title:'✅ Tidak Ada Klaster pada Level Siaga/Crisis',body:'Tidak ada klaster yang melampaui threshold kritis. Fokus pada pencegahan eskalasi dan monitoring ketat.'});
+  el.innerHTML=cards.slice(0,6).map(c=>`<div class="signal-card ${c.t}"><div class="stitle">${c.title}</div><div class="sbody">${c.body}</div></div>`).join('');
+}
+
+function rnProtoGrid(sc){
+  const el=document.getElementById('ews-proto-grid'); if(!el) return;
+  const byT={3:[],2:[],1:[]};
+  Object.entries(sc).forEach(([k,s])=>{
+    const m=KL[k]; if(!m) return;
+    byT[s.tier.cls==='crisis'?3:(['sedang','siaga'].includes(s.tier.cls)?2:1)].push({k,s,m});
+  });
+  let html='';
+  if(byT[3].length||byT[2].length){
+    const items=[...byT[3],...byT[2]], tc=byT[3].length?'tier3':'tier2', cc=byT[3].length?'t3':'t2';
+    html+=`<div class="active-proto ${tc}">
+      <div class="proto-header"><div class="proto-name ${cc}">⚠️ ${byT[3].length?'Tier 3 — Crisis':'Tier 2 — Sedang'} &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div><div class="proto-range ${cc}">IIRS ${byT[3].length?'≥60':'36–59'}</div></div>
+      <div class="klaster-badges">${items.map(({k,s,m})=>`<span class="kbadge ${s.tier.cls}"><span class="dpulse"></span>${m.emoji} ${k} — ${fmt(s.iirs)}</span>`).join('')}</div>
+      <div class="proto-row"><div class="proto-icon">📋</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, disuarakan dalam RDGM.</div></div>
+      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pesan &amp; Kanal:</strong> Klarifikasi reaktif + edukasi tematik intensif. Paid promotion diperbesar, influencer/kreator diaktifkan.</div></div>
+      <div class="sla-pill ${cc}">⏱ SLA: Maks. ${byT[3].length?'6':'12'} jam sejak IIRS menembus threshold</div>
+    </div>`;
+  }
+  if(byT[1].length){
+    html+=`<div class="active-proto tier1">
+      <div class="proto-header"><div class="proto-name t1">✅ Tier 1 — Ringan &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div><div class="proto-range t1">IIRS 0–35</div></div>
+      <div class="klaster-badges">${byT[1].map(({k,s,m})=>`<span class="kbadge ringan"><span class="dpulse"></span>${m.emoji} ${k} — ${fmt(s.iirs)}</span>`).join('')}</div>
+      <div class="proto-row"><div class="proto-icon">📋</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun laporan mingguan terintegrasi ke Kepala Divisi DKom.</div></div>
+      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pendekatan:</strong> Proactive education — konten organik edukatif, paid promotion ringan, taklimat media &amp; FGD akademisi.</div></div>
+      <div class="sla-pill t1">⏱ SLA: Maks. 24 jam sejak pembaruan dashboard IIRS</div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+function rnWordCloudsLive(kw){
+  Object.entries(KL).forEach(([k,m])=>{
+    const words=kw[k]; if(!words||!words.length) return;
+    const canvas=document.getElementById(m.wcId); if(!canvas) return;
+    const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+    WC_DATA[m.key]=words;
+    initWordCloud(m.wcId,words,m.wcc);
+  });
+}
+
+function rnNarasiLive(nar){
+  Object.entries(KL).forEach(([k,m])=>{
+    const texts=(nar[k]||[]).slice(0,5);
+    if(!texts.length) return;
+    renderNarasi(m.narId,texts.map(t=>({klaster:`${m.emoji} ${k}`,text:t})),m.key);
+  });
+}
+
+/* ── Main apply ───────────────────────────────────── */
+function applyLiveData(data){
+  const {sc,kw,nar,ds,info}=data;
+  rnPeriod(info.periode);
+  if(ds&&Object.keys(ds).length) rnDatasetBar(ds);
+  if(sc&&Object.keys(sc).length){
+    rnIIRSGrid(sc); rnScaleBar(sc); rnExecPara(sc,info.periode);
+    rnSourceScoreTable(sc); rnSignalGrid(sc); rnProtoGrid(sc);
+  }
+  if(kw) setTimeout(()=>rnWordCloudsLive(kw),350);
+  if(nar) rnNarasiLive(nar);
+  document.getElementById('ews-upload-card').classList.add('activated');
+}
+
+/* ── Upload handler ───────────────────────────────── */
+async function handleExcelUpload(files){
+  if(!files||!files.length) return;
+  setUploadStatus('loading',`⏳ Memproses ${files.length} file Excel...`);
+  let info={periode:'N/A',bNL:0.4,bSX:0.6}, sc={}, kw={}, nar={}, ds={};
+  const fileList=[];
+  for(const file of files){
+    try{
+      const buf=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsArrayBuffer(file); });
+      const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+      const sn=wb.SheetNames.map(s=>s.trim().toUpperCase());
+      const gs=name=>{ const i=['SOURCE_SCORE','SCORE','PERHITUNGAN','IIRS','SOURCE','INFO','PANDUAN','KEYWORD','KEYWORDS','KATA','PETA_KATA','NARASI','NARASI_NEGATIF','NEGATIF','DATASET','DATA','JUMLAH','SUMMARY'].includes(name)?sn.indexOf(name):sn.findIndex(x=>x.includes(name)); return i>=0?wb.Sheets[wb.SheetNames[i]]:null; };
+      // INFO
+      const infoSh=gs('INFO')||gs('PANDUAN'); if(infoSh){ const p=parseINFO(infoSh); if(p.periode!=='N/A') info=p; }
+      // SOURCE_SCORE
+      const ssSh=gs('SOURCE_SCORE')||gs('SCORE')||gs('PERHITUNGAN')||gs('IIRS');
+      if(ssSh){ Object.assign(sc,parseSOURCE_SCORE(ssSh,info.bNL,info.bSX)); }
+      // KEYWORD
+      const kwSh=gs('KEYWORD')||gs('KEYWORDS')||gs('KATA')||gs('PETA_KATA');
+      if(kwSh){ const k=parseKEYWORD(kwSh); Object.keys(k).forEach(kl=>{ if(k[kl].length) kw[kl]=k[kl]; }); }
+      // NARASI
+      const nSh=gs('NARASI')||gs('NARASI_NEGATIF')||gs('NEGATIF');
+      if(nSh){ const n=parseNARASI(nSh); Object.keys(n).forEach(kl=>{ if(n[kl].length) nar[kl]=n[kl]; }); }
+      // DATASET
+      const dSh=gs('DATASET')||gs('DATA')||gs('JUMLAH')||gs('SUMMARY');
+      if(dSh){ Object.assign(ds,parseDATASET(dSh)); }
+      fileList.push({name:file.name,ok:true,sheets:wb.SheetNames.join(', ')});
+    }catch(e){ fileList.push({name:file.name,ok:false,err:e.message}); }
+  }
+  // Render file chips
+  const fl=document.getElementById('ews-file-list');
+  if(fl){ fl.style.display='flex'; fl.innerHTML=fileList.map(f=>`<div class="ews-file-chip ${f.ok?'':'chip-err'}">${f.ok?'✅':'❌'} <strong>${f.name}</strong>${f.ok?` <span>${f.sheets}</span>`:''}</div>`).join(''); }
+  if(Object.keys(sc).length){
+    applyLiveData({sc,kw,nar,ds,info});
+    setUploadStatus('ok',`✅ Data berhasil dimuat — Periode: <strong>${info.periode}</strong> · Dashboard aktif dengan data aktual`);
+  } else {
+    setUploadStatus('error','❌ Sheet <strong>SOURCE_SCORE</strong> tidak ditemukan. Gunakan template yang disediakan dan pastikan nama sheet sudah benar.');
+  }
+}
+
+function setUploadStatus(type,msg){
+  const el=document.getElementById('ews-upload-status'); if(!el) return;
+  el.className='ews-upload-status upload-'+type;
+  el.innerHTML=msg; el.style.display='block';
+}
+
+/* ── Template generator (Download) ───────────────── */
+function downloadTemplate(){
+  if(typeof XLSX==='undefined'){ alert('Library XLSX belum termuat. Coba refresh halaman.'); return; }
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['FIELD','VALUE','KETERANGAN'],
+    ['PERIODE','April 2026','Isi periode pemantauan, contoh: Mei 2026'],
+    ['BOBOT_NOLIMIT','0.4','Bobot vendor NoLimit Indonesia (Kanal BI). Default 0.4 = 40%'],
+    ['BOBOT_SENTRIX','0.6','Bobot vendor Sentrix Telkomsel (Non-Kanal BI). Default 0.6 = 60%'],
+  ]),'INFO');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['KLASTER','VENDOR','NS','VA','ER','KETERANGAN'],
+    ['Rupiah','NoLimit','0.350','0.170','1.000','NS=Negative Sentiment Ratio (0-1), VA=Volume Anomaly (0-1), ER=Exposure & Reach (0-1)'],
+    ['Rupiah','Sentrix','0.326','0.101','1.000',''],
+    ['Inflasi','NoLimit','0.160','0.000','0.250',''],
+    ['Inflasi','Sentrix','0.090','0.580','0.840',''],
+    ['BI-Rate','NoLimit','0.216','0.304','0.271',''],
+    ['BI-Rate','Sentrix','0.250','0.170','1.000',''],
+  ]),'SOURCE_SCORE');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['KLASTER','KEYWORD','FREKUENSI','KETERANGAN'],
+    ['Rupiah','pasar','22899','Isi dengan top keywords dan frekuensinya per klaster. Min 10 keyword per klaster.'],
+    ['Rupiah','dolar','20642',''],['Rupiah','global','18669',''],
+    ['Inflasi','global','5221',''],['Inflasi','pemerintah','5145',''],['Inflasi','kenaikan','4312',''],
+    ['BI-Rate','bunga','75',''],['BI-Rate','suku','73',''],['BI-Rate','stabilitas','51',''],
+  ]),'KEYWORD');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['KLASTER','TEKS','KETERANGAN'],
+    ['Rupiah','Nilai Rupiah Tembus Rekor Terlemah Sepanjang Sejarah. Nilai tukar rupiah menembus rekor terlemah...','Isi dengan sampel narasi negatif (min 3 per klaster)'],
+    ['Rupiah','Rupiah Ambruk ke Level Rp17.300 per Dolar AS. Tekanan eksternal yang meningkat...',''],
+    ['Rupiah','DPR Desak Pemerintah Jangan Andalkan BI Semata. Kondisi ini bukan fluktuasi biasa...',''],
+    ['Inflasi','Lonjakan harga minyak dunia membayangi ekonomi Indonesia. Inflasi berpotensi naik...',''],
+    ['Inflasi','Dunia menghadapi situasi ekonomi yang tidak baik-baik saja. Harga pangan melonjak...',''],
+    ['Inflasi','Kebijakan moneter berdampak ke masyarakat bawah: cicilan KPR naik, kredit UMKM mahal...',''],
+    ['BI-Rate','Gubernur BI: BI Rate sulit diturunkan dari 4.75% akibat tekanan global...',''],
+    ['BI-Rate','UMKM mengeluh: akses kredit makin ketat, bunga pinjaman belum turun...',''],
+    ['BI-Rate','Investor mempertanyakan komitmen BI terhadap pertumbuhan ekonomi...',''],
+  ]),'NARASI');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['KLASTER','VENDOR','JUMLAH','KETERANGAN'],
+    ['Rupiah','NoLimit','2874','Jumlah konten/posting yang dipantau per klaster per vendor'],
+    ['Rupiah','Sentrix','15167',''],
+    ['Inflasi','NoLimit','242',''],
+    ['Inflasi','Sentrix','17421',''],
+    ['BI-Rate','NoLimit','51',''],
+    ['BI-Rate','Sentrix','5374',''],
+  ]),'DATASET');
+  XLSX.writeFile(wb,'Template_EWS_BI_Dashboard.xlsx');
+}
+
+/* ── Drag & drop ──────────────────────────────────── */
+(function initDragDrop(){
+  const z=document.getElementById('ews-upload-card'); if(!z) return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag-over');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag-over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag-over');handleExcelUpload(e.dataTransfer.files);});
+})();
 </script>
 
 <!-- FLOATING AI BUTTON -->
