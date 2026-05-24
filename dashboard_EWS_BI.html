@@ -473,7 +473,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 
   <!-- LANGKAH AKTIF / ACTIVE PROTOCOL -->
   <div class="section-title">Langkah Aktif — Protokol Respons Berdasarkan Hasil IIRS</div>
-  <div id="ews-proto-grid" class="g2">
+  <div id="ews-proto-grid" style="display:flex;flex-direction:column;gap:12px">
 
     <!-- TIER 2 ACTIVE -->
     <div class="active-proto tier2">
@@ -1456,45 +1456,63 @@ function rnSignalGrid(sc){
 
 function rnProtoGrid(sc){
   const el=document.getElementById('ews-proto-grid'); if(!el) return;
-  const byT={3:[],2:[],1:[]};
-  Object.entries(sc).forEach(([k,s])=>{
-    const m=KL[k]; if(!m) return;
-    byT[s.tier.cls==='crisis'?3:(['sedang','siaga'].includes(s.tier.cls)?2:1)].push({k,s,m});
-  });
+
+  /* ── Protocol templates per tier ─────────────────────────────────── */
+  const PROTO={
+    crisis:{tc:'tier3',cc:'t3',icon:'🚨',label:'Tier 3 — Crisis',range:'IIRS ≥ 60',sla:'3',steps:[
+      {i:'🚨',t:'Eskalasi Darurat',    b:'Laporan segera ke <strong>Gubernur BI, Deputi Gubernur,</strong> &amp; Kepala Satker DKom. Aktivasi <strong>Satuan Tugas Komunikasi Krisis.</strong> Selenggarakan Rapat Darurat Direksi.'},
+      {i:'📋',t:'Joint Issue Brief Darurat', b:'DP2K &amp; DLIPKD susun <em>joint issue brief</em> URGENT dalam maks. <strong>1 jam.</strong> Disampaikan ke Direksi BI &amp; Kepala Satker DKom untuk persetujuan dan tindak lanjut.'},
+      {i:'👥',t:'Tim &amp; Jubir Krisis',b:'<strong>DP2K</strong> (crisis intelligence) · <strong>DLIPKD</strong> (konten darurat) · <strong>DROM</strong> (media crisis center) · <strong>TRPI</strong> (46 KPwDN full mobilization) · <strong>DRLP2</strong> (opini publik &amp; akademisi). Jubir: <strong>Gubernur BI / Deputi Gubernur.</strong>'},
+      {i:'📢',t:'Siaran Pers &amp; Saturasi Kanal',b:'Rilis <strong>siaran pers resmi</strong> + gelar <strong>konferensi pers Gubernur BI</strong> dalam 2 jam. Maksimalkan seluruh kanal BI. Paid promotion darurat skala penuh. Kontra-narasi masif di semua platform digital.'},
+      {i:'🤝',t:'Koordinasi Lintas Lembaga', b:'Sinkronisasi narasi dengan <strong>Kemenkeu, Kemenko Perekonomian, OJK,</strong> &amp; Kementerian terkait. Pertimbangkan pernyataan bersama lintas lembaga bila diperlukan.'},
+      {i:'👁️',t:'Monitoring Real-Time',   b:'Pantau IIRS setiap <strong>30 menit.</strong> Laporan situasi ke pimpinan setiap jam. Status Crisis dipertahankan hingga IIRS &lt; 60 selama 2 periode berturut-turut.'},
+    ]},
+    siaga:{tc:'tier3',cc:'t3',icon:'🚨',label:'Tier 2 — Siaga',range:'IIRS 50–59',sla:'6',steps:[
+      {i:'⚡',t:'Eskalasi Segera',     b:'Lapor ke <strong>Kepala Satker DKom &amp; Kepala Satker substansi terkait</strong> (DKEM/DKMP/DKSP). Koordinasi DP2K–DLIPKD–DROM. Disuarakan dalam RDG/RDGM.'},
+      {i:'📋',t:'Joint Issue Brief',   b:'DP2K &amp; DLIPKD susun <em>joint issue brief</em> dalam maks. <strong>3 jam.</strong> Disampaikan ke Kepala Grup &amp; Kepala Satker DKom. Sertakan skenario eskalasi ke Crisis.'},
+      {i:'👥',t:'Tim &amp; Jubir',     b:'<strong>DP2K</strong> (intelligence center) · <strong>DLIPKD</strong> (konten tematik intensif) · <strong>DROM</strong> (intensifikasi media) · <strong>TRPI</strong> (46 KPwDN synchronized) · <strong>DRLP2</strong> (akademisi). Jubir: <strong>Kepala Grup / Kepala Satker DKom.</strong>'},
+      {i:'📢',t:'Klarifikasi &amp; Penguatan Kanal',b:'Klarifikasi reaktif segera + edukasi tematik intensif. Paid promotion diperbesar signifikan. Influencer &amp; kreator konten diaktifkan penuh. Clipper selektif.'},
+      {i:'🎯',t:'Fokus Aksi',          b:'Identifikasi narasi dominan negatif &amp; susun kontra-narasi spesifik. Waspadai potensi lonjakan ke Crisis (IIRS ≥ 60). Koordinasi intensif semua unit DKom.'},
+      {i:'👁️',t:'Monitoring Intensif', b:'Pantau IIRS setiap <strong>2 jam.</strong> Bila stabil &lt; 50 selama 2 periode → turunkan ke Sedang. Bila naik ≥ 60 → eskalasi darurat ke Tier 3.'},
+    ]},
+    sedang:{tc:'tier2',cc:'t2',icon:'⚠️',label:'Tier 2 — Sedang',range:'IIRS 36–49',sla:'12',steps:[
+      {i:'📋',t:'Eskalasi &amp; Brief', b:'DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke <strong>Kepala Grup &amp; Kepala Satker DKom,</strong> disuarakan dalam RDGM.'},
+      {i:'👥',t:'Tim &amp; Jubir',     b:'<strong>DP2K</strong> (koordinator insight &amp; tema komunikasi) · <strong>DLIPKD</strong> (eksekutor digital) · <strong>DROM</strong> (relasi media) · <strong>TRPI</strong> (cascading 46 KPwDN) · <strong>DRLP2</strong> (jejaring akademisi). Jubir: <strong>Kepala Grup DKom.</strong>'},
+      {i:'📢',t:'Pesan &amp; Kanal',   b:'Klarifikasi reaktif + edukasi tematik. +1 pertemuan tematik semua kanal. Paid promotion diperbesar, influencer/kreator mulai diaktifkan, clipper selektif.'},
+      {i:'🎯',t:'Fokus Aksi',          b:'Pantau tren IIRS menuju ambang Siaga (50). Identifikasi narasi dominan negatif &amp; siapkan kontra-narasi. Evaluasi mingguan ke RDGM.'},
+      {i:'🔄',t:'De-Eskalasi',         b:'Bila IIRS stabil &lt; 36 → turun ke Tier 1 Ringan. Dokumentasi narasi efektif sebagai <em>key message library</em> untuk periode berikutnya.'},
+    ]},
+    ringan:{tc:'tier1',cc:'t1',icon:'✅',label:'Tier 1 — Ringan',range:'IIRS 0–35',sla:'24',steps:[
+      {i:'📋',t:'Laporan Terintegrasi', b:'<strong>DP2K</strong> (IIRS Lead External) &amp; <strong>DLIPKD</strong> (Co-Lead Internal) susun <strong>laporan mingguan terintegrasi</strong> ke Kepala Divisi DKom.'},
+      {i:'👥',t:'Tim',                  b:'<strong>DP2K</strong> (koordinator insight, tema komunikasi bulanan) · <strong>DLIPKD</strong> (eksekutor digital) · <strong>DROM</strong> (relasi media rutin) · <strong>TRPI</strong> (cascading 46 KPwDN) · <strong>DRLP2</strong> (jejaring akademisi &amp; FGD).'},
+      {i:'📢',t:'Pendekatan Proaktif',  b:'Proactive education — konten organik edukatif (evergreen), paid promotion ringan. Taklimat Media (2 bulanan) · Training Wartawan (3 bulanan) · FGD Akademisi (6 bulanan).'},
+      {i:'👁️',t:'Monitoring &amp; Peringatan Dini', b:'Pantau IIRS harian. Deteksi dini sinyal kenaikan menuju threshold Sedang (36). Evaluasi bulanan oleh Kepala Divisi.'},
+      {i:'🔄',t:'De-Eskalasi',         b:'Bila IIRS naik &gt; 35 → eskalasi ke Tier 2 Sedang. Feedback loop: identifikasi tema &amp; kanal berkinerja tinggi sebagai basis strategi komunikasi ke depan.'},
+    ]},
+  };
+
+  /* ── Render satu kartu per klaster, urut dari IIRS tertinggi ──────── */
+  const sorted=Object.entries(sc).sort((a,b)=>b[1].iirs-a[1].iirs);
   let html='';
-  if(byT[3].length||byT[2].length){
-    const isCrisis=byT[3].length>0;
-    const items=[...byT[3],...byT[2]], tc=isCrisis?'tier3':'tier2', cc=isCrisis?'t3':'t2';
-    const icon=isCrisis?'🚨':'⚠️';
-    const titleLabel=isCrisis?'Tier 3 — Crisis':'Tier 2 — Sedang';
-    const iirRange=isCrisis?'IIRS ≥ 60':'IIRS 36 – 59';
-    const slaHours=isCrisis?'3':'12';
-    const crisisWarning=isCrisis?`
-      <div style="background:rgba(192,57,43,.12);border-left:4px solid #C0392B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#7B241C;font-weight:600">
-        🔴 SITUASI KRISIS — Semua klaster yang melampaui IIRS ≥ 60 memerlukan respons darurat segera. Aktivasi Satuan Tugas Komunikasi Krisis.
-      </div>`:'' ;
-    html+=`<div class="active-proto ${tc}">
+  sorted.forEach(([k,s])=>{
+    const m=KL[k]; if(!m) return;
+    const p=PROTO[s.tier.cls]; if(!p) return;
+    const isCrisis=s.tier.cls==='crisis';
+    html+=`
+    <div class="active-proto ${p.tc}">
       <div class="proto-header">
-        <div class="proto-name ${cc}">${icon} ${titleLabel} &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div>
-        <div class="proto-range ${cc}">${iirRange}</div>
+        <div class="proto-name ${p.cc}">${p.icon} ${p.label} &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;font-weight:700">${m.emoji} <strong>${k}</strong> — IIRS <strong>${fmt(s.iirs)}</strong></span>
+          <div class="proto-range ${p.cc}">${p.range}</div>
+        </div>
       </div>
-      ${crisisWarning}
-      <div class="klaster-badges">${items.map(({k,s,m})=>`<span class="kbadge ${s.tier.cls}"><span class="dpulse"></span>${m.emoji} ${k} — ${fmt(s.iirs)}</span>`).join('')}</div>
-      <div class="proto-row"><div class="proto-icon">${isCrisis?'🚨':'📋'}</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke Kepala Grup &amp; Kepala Satker DKom${isCrisis?', <strong>lapor langsung ke Gubernur BI &amp; Deputi</strong>':''}, disuarakan dalam RDGM.</div></div>
-      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pesan &amp; Kanal:</strong> ${isCrisis?'Respons krisis segera — siaran pers resmi, konferensi pers, pernyataan Gubernur BI. Semua kanal diaktifkan maksimal.':'Klarifikasi reaktif + edukasi tematik intensif. Paid promotion diperbesar, influencer/kreator diaktifkan.'}</div></div>
-      <div class="sla-pill ${cc}">⏱ SLA: Maks. ${slaHours} jam sejak IIRS menembus threshold</div>
+      ${isCrisis?`<div style="background:rgba(192,57,43,.13);border-left:4px solid #C0392B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#7B241C;font-weight:600">🔴 SITUASI KRISIS — IIRS <strong>${fmt(s.iirs)}</strong> melampaui threshold ≥ 60. Respons darurat wajib diaktifkan dalam <strong>3 jam.</strong></div>`:''}
+      ${p.steps.map(st=>`<div class="proto-row"><div class="proto-icon">${st.i}</div><div class="proto-detail"><strong>${st.t}:</strong> ${st.b}</div></div>`).join('')}
+      <div class="sla-pill ${p.cc}">⏱ SLA: Maks. ${p.sla} jam sejak IIRS menembus threshold</div>
     </div>`;
-  }
-  if(byT[1].length){
-    html+=`<div class="active-proto tier1">
-      <div class="proto-header"><div class="proto-name t1">✅ Tier 1 — Ringan &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div><div class="proto-range t1">IIRS 0–35</div></div>
-      <div class="klaster-badges">${byT[1].map(({k,s,m})=>`<span class="kbadge ringan"><span class="dpulse"></span>${m.emoji} ${k} — ${fmt(s.iirs)}</span>`).join('')}</div>
-      <div class="proto-row"><div class="proto-icon">📋</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun laporan mingguan terintegrasi ke Kepala Divisi DKom.</div></div>
-      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pendekatan:</strong> Proactive education — konten organik edukatif, paid promotion ringan, taklimat media &amp; FGD akademisi.</div></div>
-      <div class="sla-pill t1">⏱ SLA: Maks. 24 jam sejak pembaruan dashboard IIRS</div>
-    </div>`;
-  }
-  el.innerHTML=html;
+  });
+  el.innerHTML=html||'<div class="card" style="padding:14px;color:var(--muted)">Upload data Excel untuk menampilkan protokol aktif berdasarkan hasil IIRS.</div>';
 }
 
 function rnWordCloudsLive(kw){
