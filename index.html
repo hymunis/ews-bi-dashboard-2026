@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard EWS Komunikasi BI — April 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bi-red:#C41230; --bi-red-dark:#8B0D21; --bi-red-light:#E8374F;
+  --ringan:#27AE60; --sedang:#F39C12; --siaga:#E67E22; --crisis:#C0392B;
+  --bg:#F5F6FA; --card:#FFFFFF; --text:#2C3E50; --muted:#7F8C8D;
+  --border:#E0E6EF; --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--bi-red-dark),var(--bi-red) 60%,var(--bi-red-light));color:#fff;padding:18px 36px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(196,18,48,.35)}
+.header h1{font-size:20px;font-weight:700}
+.header h2{font-size:12px;opacity:.85;margin-top:3px}
+.period-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600}
+.header-sub{font-size:11px;opacity:.7;margin-top:5px;text-align:right}
+
+/* TAB NAV */
+.tab-nav{background:#fff;border-bottom:2px solid var(--border);display:flex;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.tab-btn{padding:13px 28px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;letter-spacing:.2px}
+.tab-btn:hover{color:var(--bi-red);background:#fef8f9}
+.tab-btn.active{color:var(--bi-red);border-bottom-color:var(--bi-red);background:#fff}
+
+/* PANELS */
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* CONTAINER */
+.container{padding:22px 32px;max-width:1400px;margin:0 auto}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--bi-red);border-left:3px solid var(--bi-red);padding-left:10px;margin-bottom:14px;margin-top:26px}
+
+/* GRIDS */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+
+/* CARDS */
+.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:18px;border:1px solid var(--border)}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
+
+/* IIRS SUMMARY CARDS */
+.iirs-card{border-radius:12px;padding:20px;color:#fff;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.iirs-card::after{content:'';position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.1)}
+.iirs-card.sedang{background:linear-gradient(135deg,#E67E22,#F39C12)}
+.iirs-card.ringan{background:linear-gradient(135deg,#27AE60,#2ECC71)}
+.iirs-card .isu-label{font-size:11px;font-weight:600;text-transform:uppercase;opacity:.85;letter-spacing:.5px}
+.iirs-card .score{font-size:46px;font-weight:800;line-height:1;margin:5px 0 4px}
+.iirs-card .tier-badge{display:inline-block;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:3px 10px;font-size:10px;font-weight:700}
+.iirs-card .protocol{margin-top:8px;font-size:10px;opacity:.8}
+.iirs-card .protocol span{background:rgba(255,255,255,.2);padding:2px 7px;border-radius:6px;font-weight:600}
+
+/* SCALE BAR */
+.scale-bar-wrap{position:relative;margin-top:10px}
+.scale-bar{height:26px;border-radius:13px;background:linear-gradient(to right,#27AE60 0%,#27AE60 35%,#F39C12 35%,#F39C12 50%,#E67E22 50%,#E67E22 60%,#C0392B 60%,#C0392B 100%);position:relative;overflow:visible}
+.zone-line{position:absolute;top:-5px;bottom:-5px;width:2px;background:rgba(255,255,255,.9);border-radius:1px;z-index:3}
+.scale-line-label{position:absolute;top:34px;transform:translateX(-50%);font-size:9px;font-weight:800;color:#555;white-space:nowrap}
+.scale-marker{position:absolute;top:-8px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:4}
+.scale-marker .needle{width:3px;border-radius:2px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.scale-marker .mlabel{position:absolute;top:-22px;color:#fff;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap}
+.scale-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:22px}
+.zone-chips{display:flex;gap:4px;margin-top:10px}
+.zchip{flex:1;text-align:center;padding:4px 2px;border-radius:6px;font-size:10px;font-weight:700;color:#fff}
+.zchip.ringan{background:#27AE60}
+.zchip.sedang{background:#F39C12}
+.zchip.siaga{background:#E67E22}
+.zchip.crisis{background:#C0392B}
+
+/* GAUGE CANVAS */
+.gauge-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.gauge-cell{background:var(--card);border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);padding:12px 8px 8px;text-align:center}
+.gauge-cell .g-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+
+/* SIGNALS */
+.signal-card{border-left:4px solid;background:var(--card);border-radius:0 8px 8px 0;padding:12px 14px;box-shadow:var(--shadow)}
+.signal-card.warn{border-color:#F39C12}.signal-card.info{border-color:#3498DB}.signal-card.ok{border-color:#27AE60}
+.signal-card .stitle{font-size:11px;font-weight:700;margin-bottom:3px}
+.signal-card .sbody{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ACTIVE PROTOCOL */
+.active-proto{border-radius:12px;padding:18px;border:2px solid}
+.active-proto.tier2{border-color:#F39C12;background:#FFFBF0}
+.active-proto.tier1{border-color:#27AE60;background:#F0FBF4}
+.proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.proto-name{font-size:14px;font-weight:700}
+.proto-name.t2{color:#C87F0A}.proto-name.t1{color:#1E8449}
+.proto-range{font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;color:#fff}
+.proto-range.t2{background:#F39C12}.proto-range.t1{background:#27AE60}
+.klaster-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.kbadge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
+.kbadge.sedang{background:#FEF6E0;color:#C87F0A;border:1px solid #F39C12}
+.kbadge.ringan{background:#EBF9F1;color:#1E8449;border:1px solid #27AE60}
+.kbadge .dpulse{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.proto-row{display:flex;gap:8px;margin-bottom:7px;font-size:11px}
+.proto-icon{flex-shrink:0;font-size:12px;margin-top:1px}
+.proto-detail{color:var(--text);line-height:1.5}
+.proto-detail strong{color:var(--text)}
+.sla-pill{display:inline-block;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;margin-top:8px;color:#fff}
+.sla-pill.t2{background:#F39C12}.sla-pill.t1{background:#27AE60}
+
+/* FULL TIER CARDS (TCRP tab) */
+.tier-card{border-radius:12px;padding:18px;border:2px solid;position:relative}
+.tier-card.tier1{border-color:#27AE60;background:#F0FBF4}
+.tier-card.tier2{border-color:#F39C12;background:#FFFBF0}
+.tier-card.tier3{border-color:#C0392B;background:#FEF0F0}
+.tier-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.tier-name{font-size:14px;font-weight:700}
+.tier-name.t1{color:#27AE60}.tier-name.t2{color:#F39C12}.tier-name.t3{color:#C0392B}
+.tier-range{font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;color:#fff}
+.tier-range.t1{background:#27AE60}.tier-range.t2{background:#F39C12}.tier-range.t3{background:#C0392B}
+.tier-row{display:flex;gap:8px;margin-bottom:7px;font-size:11px}
+.tier-icon{flex-shrink:0;font-size:12px;margin-top:1px}
+.tier-detail{color:var(--text);line-height:1.5}
+.sla-badge{display:inline-block;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;margin-top:8px;color:#fff}
+.sla-badge.t1{background:#27AE60}.sla-badge.t2{background:#F39C12}.sla-badge.t3{background:#C0392B}
+
+/* SOURCE SCORE TABLE */
+.score-table{width:100%;border-collapse:collapse}
+.score-table th{background:#F8F9FB;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.score-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px}
+.score-table tr:last-child td{border-bottom:none}
+.mini-bar-wrap{background:#EEF0F3;border-radius:4px;height:7px;min-width:80px}
+.mini-bar{height:7px;border-radius:4px}
+.mini-bar.nl{background:var(--bi-red)}.mini-bar.sx{background:#3498DB}
+.score-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:#fff}
+.badge-s{background:#F39C12}.badge-r{background:#27AE60}
+
+/* VENDOR TAG */
+.vtag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase}
+.vtag.nl{background:#FDEDEC;color:var(--bi-red);border:1px solid #F1948A}
+.vtag.sx{background:#EBF5FB;color:#1A5276;border:1px solid #85C1E9}
+
+/* FORMULA BOX */
+.formula-box{background:#1E2D40;color:#E8F4FD;border-radius:10px;padding:14px 18px;font-family:'Courier New',monospace;font-size:11px;line-height:1.9}
+.formula-box .ft{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7FB3D3;margin-bottom:8px}
+.hi{color:#F7DC6F}.blu{color:#85C1E9}.grn{color:#82E0AA}
+
+/* SENTIMENT BARS */
+.sent-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sent-lbl{font-size:11px;width:75px;font-weight:600}
+.sent-bar-wrap{flex:1;display:flex;height:18px;border-radius:5px;overflow:hidden}
+.s-neg{background:#C0392B}.s-neu{background:#95A5A6}.s-pos{background:#27AE60}
+.sent-pct{font-size:9px;color:var(--muted);white-space:nowrap}
+
+/* VAL TABLE */
+.val-table{width:100%;border-collapse:collapse}
+.val-table th{background:#F8F9FB;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:6px 8px;text-align:center;border-bottom:2px solid var(--border)}
+.val-table td{padding:8px;border-bottom:1px solid var(--border);font-size:11px;text-align:center}
+.val-table td.isu-col{text-align:left;font-weight:700}
+.val-table tr:last-child td{border-bottom:none}
+.pneg{color:#C0392B;font-weight:700}.pneu{color:#7F8C8D;font-weight:600}.ppos{color:#27AE60;font-weight:700}
+
+/* MATRIX TABLE */
+.mx-table{width:100%;border-collapse:collapse;min-width:600px}
+.mx-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.mx-table th.h1{background:#EBF9F1;color:#1E8449}
+.mx-table th.h2{background:#FEF9E7;color:#B7770D}
+.mx-table th.h3{background:#FDEDEC;color:#922B21}
+.mx-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px}
+.mx-table tr:last-child td{border-bottom:none}
+.mx-table td:first-child{font-weight:700;white-space:nowrap}
+
+/* COMPONENT CARDS */
+.comp-card{background:#F8F9FB;border-radius:8px;padding:12px;border:1px solid var(--border)}
+.comp-card .ctitle{font-size:10px;font-weight:700;color:var(--bi-red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.comp-bar-wrap{background:#E0E6EF;border-radius:3px;height:5px;margin-top:2px}
+.comp-bar{height:5px;border-radius:3px}
+.comp-bar.ns{background:#C0392B}.comp-bar.va{background:#F39C12}.comp-bar.er{background:#3498DB}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
+
+/* FOOTER */
+.footer{background:#2C3E50;color:rgba(255,255,255,.55);text-align:center;padding:14px;font-size:10px;margin-top:32px}
+
+@media(max-width:900px){.g3,.g4,.gauge-row{grid-template-columns:1fr}.g2,.g12{grid-template-columns:1fr}.container{padding:14px}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Dashboard Integratif EWS Komunikasi Kebijakan BI</h1>
+    <h2>Integrated Issue Risk Score (IIRS) &amp; Tiered Communication Response Protocol (TCRP)</h2>
+  </div>
+  <div>
+    <div class="period-badge">📅 Periode Pemantauan: April 2026</div>
+    <div class="header-sub">SESMUBI Angkatan 14 — Kelompok 14 &nbsp;|&nbsp; No Limit Indonesia × Sentrix Telkomsel</div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tab-overview" onclick="switchTab('tab-overview')">📊 Overview</button>
+  <button class="tab-btn" data-tab="tab-analisis" onclick="switchTab('tab-analisis')">🔍 Analisis Data</button>
+  <button class="tab-btn" data-tab="tab-tcrp" onclick="switchTab('tab-tcrp')">📋 Protokol TCRP</button>
+</nav>
+
+<!-- ════════════════════════════════════════
+     TAB 1: OVERVIEW
+════════════════════════════════════════ -->
+<div id="tab-overview" class="tab-panel active">
+<div class="container">
+
+  <!-- IIRS SUMMARY -->
+  <div class="section-title">Skor IIRS &amp; Status Tier — Ringkasan Eksekutif</div>
+  <div class="g3">
+    <div class="iirs-card sedang">
+      <div class="isu-label">🏦 Klaster: Rupiah</div>
+      <div class="score">47,28</div>
+      <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
+      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+    </div>
+    <div class="iirs-card ringan">
+      <div class="isu-label">📈 Klaster: Inflasi</div>
+      <div class="score">33,26</div>
+      <div class="tier-badge">✅ TIER 1 — RINGAN</div>
+      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 1</span></div>
+    </div>
+    <div class="iirs-card sedang">
+      <div class="isu-label">🏛️ Klaster: BI-Rate</div>
+      <div class="score">37,42</div>
+      <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
+      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+    </div>
+  </div>
+
+  <!-- SCALE BAR -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">Skala IIRS — Posisi Klaster pada Kontinum Risiko</div>
+    <div class="scale-bar-wrap">
+      <div class="scale-bar">
+        <div class="zone-line" style="left:35%"><span class="scale-line-label">35</span></div>
+        <div class="zone-line" style="left:50%"><span class="scale-line-label">50</span></div>
+        <div class="zone-line" style="left:60%"><span class="scale-line-label">60</span></div>
+        <!-- Rupiah -->
+        <div class="scale-marker" style="left:47.28%">
+          <div class="mlabel" style="background:#2C3E50">Rupiah 47,28</div>
+          <div class="needle" style="height:44px;background:#2C3E50"></div>
+        </div>
+        <!-- Inflasi -->
+        <div class="scale-marker" style="left:33.26%;top:8px">
+          <div class="mlabel" style="background:#27AE60;top:-34px">Inflasi 33,26</div>
+          <div class="needle" style="height:36px;background:#27AE60"></div>
+        </div>
+        <!-- BI-Rate -->
+        <div class="scale-marker" style="left:37.42%;top:4px">
+          <div class="mlabel" style="background:#888;top:-28px">BI-Rate 37,42</div>
+          <div class="needle" style="height:40px;background:#888"></div>
+        </div>
+      </div>
+      <div class="scale-labels" style="margin-top:22px">
+        <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span>
+        <span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span>
+      </div>
+    </div>
+    <div class="zone-chips">
+      <div class="zchip ringan" style="flex:35">Ringan (0–35)</div>
+      <div class="zchip sedang" style="flex:15">Sedang (36–49)</div>
+      <div class="zchip siaga"  style="flex:10">Siaga (50–59)</div>
+      <div class="zchip crisis" style="flex:40">Crisis (≥60)</div>
+    </div>
+  </div>
+
+  <!-- COMPACT SPEEDOMETER GAUGES -->
+  <div class="section-title">Gauge — Posisi IIRS Tiap Klaster</div>
+  <div class="gauge-row">
+    <div class="gauge-cell">
+      <div class="g-label">🏦 Rupiah</div>
+      <canvas id="gaugeRupiah" width="220" height="135"></canvas>
+    </div>
+    <div class="gauge-cell">
+      <div class="g-label">📈 Inflasi</div>
+      <canvas id="gaugeInflasi" width="220" height="135"></canvas>
+    </div>
+    <div class="gauge-cell">
+      <div class="g-label">🏛️ BI-Rate</div>
+      <canvas id="gaugeBIRate" width="220" height="135"></canvas>
+    </div>
+  </div>
+
+  <!-- SITUASI SAAT INI -->
+  <div class="section-title">Situasi Saat Ini — Sinyal Strategis Lintas Klaster</div>
+  <div class="g3">
+    <div class="signal-card warn">
+      <div class="stitle">⚠️ Rupiah Mendekati Ambang Siaga</div>
+      <div class="sbody">IIRS 47,28 — hanya 2,72 poin dari Siaga (50). ER Sentrix sudah jenuh di 100%. Setiap kenaikan NS akan langsung berdampak signifikan pada IIRS. Perlu respons proaktif sekarang.</div>
+    </div>
+    <div class="signal-card warn">
+      <div class="stitle">⚠️ Inflasi: Sentrix-Driven, VA Tinggi 58%</div>
+      <div class="sbody">Source Score Sentrix Inflasi (46,20) setara Rupiah. Ditahan oleh NoLimit yang sangat rendah (13,90). Volume Anomaly Sentrix 58% menjadi <em>leading indicator</em> — bila ada trigger harga, dapat naik ke Sedang cepat.</div>
+    </div>
+    <div class="signal-card info">
+      <div class="stitle">📊 BI-Rate: Gap Dua Kanal 19 Poin</div>
+      <div class="sbody">NoLimit 25,89 vs Sentrix 45,10. Ruang publik eksternal jauh lebih ramai dari kanal resmi BI. Strategi bridging edukatif diperlukan untuk menjembatani gap persepsi antar kanal.</div>
+    </div>
+    <div class="signal-card info">
+      <div class="stitle">📊 Rupiah: Konvergensi Dua Kanal</div>
+      <div class="sbody">NoLimit 49,10 ≈ Sentrix 46,07. Perbincangan di kanal resmi dan publik bergerak hampir paralel. Komunikasi harus konsisten di kedua kanal secara bersamaan.</div>
+    </div>
+    <div class="signal-card ok">
+      <div class="stitle">✅ Tidak Ada Klaster pada Level Crisis</div>
+      <div class="sbody">Tidak ada yang mencapai Crisis (≥60) atau Siaga (50–59) pada April 2026. Protokol Tier 3 tidak diaktifkan. Perhatian utama pada pencegahan eskalasi Rupiah ke zona Siaga.</div>
+    </div>
+    <div class="signal-card warn">
+      <div class="stitle">⚠️ ER Jenuh — Rupiah &amp; BI-Rate (Sentrix)</div>
+      <div class="sbody">ER Sentrix Rupiah dan BI-Rate mencapai 100% (saturasi jangkauan). Tidak ada ruang buffer — kenaikan NS periode berikutnya akan langsung terdampak ke IIRS secara penuh.</div>
+    </div>
+  </div>
+
+  <!-- LANGKAH AKTIF / ACTIVE PROTOCOL -->
+  <div class="section-title">Langkah Aktif — Protokol Respons Berdasarkan Hasil IIRS</div>
+  <div class="g2">
+
+    <!-- TIER 2 ACTIVE -->
+    <div class="active-proto tier2">
+      <div class="proto-header">
+        <div class="proto-name t2">⚠️ Tier 2 — Sedang &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div>
+        <div class="proto-range t2">IIRS 36 – 59</div>
+      </div>
+      <div class="klaster-badges">
+        <span class="kbadge sedang"><span class="dpulse"></span> 🏦 Rupiah — 47,28</span>
+        <span class="kbadge sedang"><span class="dpulse"></span> 🏛️ BI-Rate — 37,42</span>
+      </div>
+      <div class="proto-row"><div class="proto-icon">📋</div>
+        <div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, disuarakan dalam RDGM. Fase Siaga (50–59): eskalasi ke Kepala Satker substansi (DKEM/DKMP/DKSP).</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">👥</div>
+        <div class="proto-detail"><strong>Tim &amp; Jubir:</strong> DP2K (intelligence center) · DLIPKD (konten tematik) · DROM (intensifikasi media) · TRPI (46 KPwDN synchronized) · DRLP2 (akademisi). Jubir: Kepala Grup / Kepala Satker DKom.</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">📢</div>
+        <div class="proto-detail"><strong>Pesan &amp; Kanal:</strong> Klarifikasi reaktif + edukasi tematik intensif. +1 pertemuan tematik semua kanal. Paid promotion diperbesar, influencer/kreator mulai diaktifkan, clipper selektif.</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">🎯</div>
+        <div class="proto-detail"><strong>Fokus Klaster:</strong> Rupiah → komunikasi konsisten di dua kanal (konvergensi). BI-Rate → strategi bridging edukatif untuk tutup gap 19 poin antar kanal.</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">🔄</div>
+        <div class="proto-detail"><strong>De-eskalasi:</strong> Bila IIRS stabil &lt;36 → turun ke Tier 1. Evaluasi mingguan ke RDGM. Dokumentasi narasi efektif sebagai key message library.</div>
+      </div>
+      <div class="sla-pill t2">⏱ SLA: Maks. 12 jam sejak IIRS menembus 36</div>
+    </div>
+
+    <!-- TIER 1 ACTIVE -->
+    <div class="active-proto tier1">
+      <div class="proto-header">
+        <div class="proto-name t1">✅ Tier 1 — Ringan &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div>
+        <div class="proto-range t1">IIRS 0 – 35</div>
+      </div>
+      <div class="klaster-badges">
+        <span class="kbadge ringan"><span class="dpulse"></span> 📈 Inflasi — 33,26</span>
+      </div>
+      <div class="proto-row"><div class="proto-icon">📋</div>
+        <div class="proto-detail"><strong>Eskalasi:</strong> DP2K (IIRS Lead External) memantau Score Kanal Non-BI. DLIPKD (Co-Lead Internal) memantau Score Kanal BI. Keduanya susun laporan mingguan terintegrasi ke Kepala Divisi DKom.</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">👥</div>
+        <div class="proto-detail"><strong>Tim:</strong> DP2K (koordinator insight, tema komunikasi bulanan) · DLIPKD (eksekutor digital) · DROM (relasi media rutin) · TRPI (cascading 46 KPwDN) · DRLP2 (jejaring akademisi &amp; FGD).</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">📢</div>
+        <div class="proto-detail"><strong>Pendekatan:</strong> Proactive education — konten organik edukatif (evergreen), paid promotion ringan. Taklimat Media (2 bulanan) · Training Wartawan (3 bulanan) · FGD Akademisi (6 bulanan).</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">⚡</div>
+        <div class="proto-detail"><strong>Peringatan Dini Inflasi:</strong> VA Sentrix sudah di 58% dan ER 84% — pantau ketat rilis data inflasi berikutnya. Bila NoLimit naik melewati 25, status berpotensi naik ke Tier 2.</div>
+      </div>
+      <div class="proto-row"><div class="proto-icon">🔄</div>
+        <div class="proto-detail"><strong>De-eskalasi:</strong> Bila IIRS naik melewati 35 → eskalasi ke Tier 2. Evaluasi bulanan oleh Kepala Divisi. Feedback loop: identifikasi tema &amp; kanal berkinerja tinggi.</div>
+      </div>
+      <div class="sla-pill t1">⏱ SLA: Maks. 24 jam sejak pembaruan dashboard IIRS</div>
+    </div>
+
+  </div>
+</div><!-- /container overview -->
+</div><!-- /tab-overview -->
+
+
+<!-- ════════════════════════════════════════
+     TAB 2: ANALISIS DATA
+════════════════════════════════════════ -->
+<div id="tab-analisis" class="tab-panel">
+<div class="container">
+
+  <!-- SOURCE SCORE -->
+  <div class="section-title">Source Score per Vendor — Bobot IIRS</div>
+  <div class="g12">
+    <div>
+      <div class="formula-box">
+        <div class="ft">Formula IIRS &amp; Source Score</div>
+        <span class="hi">IIRS</span> = <span style="color:#F1948A">0,40</span> × Score<sub>NoLimit</sub> + <span class="blu">0,60</span> × Score<sub>Sentrix</sub><br><br>
+        <span class="hi">Source Score</span> = 100 × [<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,40</span> × <span class="grn">NS</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">VA</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">ER</span><br>
+        ]<br><br>
+        <span style="color:#AAB7B8">NS</span> = Negative Sentiment Ratio<br>
+        <span style="color:#AAB7B8">VA</span> = Volume Anomaly Ratio<br>
+        <span style="color:#AAB7B8">ER</span> = Exposure &amp; Reach Ratio
+      </div>
+      <div class="card" style="margin-top:10px;padding:14px">
+        <div class="card-title">Bobot Vendor</div>
+        <div style="font-size:11px;margin-bottom:7px">
+          <span class="vtag nl">No Limit Indonesia</span> = Kanal BI (Bobot <strong>40%</strong>)<br>
+          <small style="color:var(--muted)">Sentimen di kanal resmi BI — relatif terkendali</small>
+        </div>
+        <hr class="div">
+        <div style="font-size:11px">
+          <span class="vtag sx">Sentrix Telkomsel</span> = Non-Kanal BI (Bobot <strong>60%</strong>)<br>
+          <small style="color:var(--muted)">Ruang publik eksternal — representasi reputational risk sesungguhnya</small>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
+      <table class="score-table">
+        <thead>
+          <tr><th>Klaster</th><th>Vendor</th><th style="text-align:center">NS</th><th style="text-align:center">VA</th><th style="text-align:center">ER</th><th style="text-align:center">Score</th><th>Visualisasi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏦 Rupiah</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,350</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">49,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:49.1%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,326</td><td style="text-align:center">0,101</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,07</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.1%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">📈 Inflasi</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,160</td><td style="text-align:center">0,000</td><td style="text-align:center">0,250</td>
+            <td style="text-align:center"><span class="score-badge badge-r">13,90</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:13.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,090</td><td style="text-align:center">0,580</td><td style="text-align:center">0,840</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,20</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.2%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏛️ BI-Rate</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,216</td><td style="text-align:center">0,304</td><td style="text-align:center">0,271</td>
+            <td style="text-align:center"><span class="score-badge badge-r">25,89</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:25.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,250</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">45,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:45.1%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- NS VA ER CHARTS -->
+  <div class="section-title">Dekomposisi Komponen NS · VA · ER per Klaster</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Sentrix Telkomsel (Non-Kanal BI)</div>
+      <canvas id="chartSentrix" height="210"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">No Limit Indonesia (Kanal BI)</div>
+      <canvas id="chartNoLimit" height="210"></canvas>
+    </div>
+  </div>
+
+  <!-- COMPONENT CARDS -->
+  <div class="g3" style="margin-top:12px">
+    <div class="comp-card">
+      <div class="ctitle">🔴 NS — Negative Sentiment</div>
+      <div style="font-size:11px;margin-bottom:6px">Rupiah <span style="float:right;color:var(--muted)">NL 35,0% · SX 32,6%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar ns" style="width:33.8%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">Inflasi <span style="float:right;color:var(--muted)">NL 16,0% · SX 9,0%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar ns" style="width:12.5%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">BI-Rate <span style="float:right;color:var(--muted)">NL 21,6% · SX 25,0%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar ns" style="width:23.3%"></div></div>
+    </div>
+    <div class="comp-card">
+      <div class="ctitle">🟡 VA — Volume Anomaly</div>
+      <div style="font-size:11px;margin-bottom:6px">Rupiah <span style="float:right;color:var(--muted)">NL 17,0% · SX 10,1%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar va" style="width:13.6%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">Inflasi ⚠️ <span style="float:right;color:var(--muted)">NL 0,0% · SX 58,0%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar va" style="width:29%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">BI-Rate <span style="float:right;color:var(--muted)">NL 30,4% · SX 17,0%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar va" style="width:23.7%"></div></div>
+    </div>
+    <div class="comp-card">
+      <div class="ctitle">🔵 ER — Exposure &amp; Reach</div>
+      <div style="font-size:11px;margin-bottom:6px">Rupiah 🔴 <span style="float:right;color:var(--muted)">NL 100% · SX 100%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar er" style="width:100%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">Inflasi <span style="float:right;color:var(--muted)">NL 25,0% · SX 84,0%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar er" style="width:54.5%"></div></div>
+      <div style="font-size:11px;margin:6px 0 2px">BI-Rate 🔴 <span style="float:right;color:var(--muted)">NL 27,1% · SX 100%</span></div>
+      <div class="comp-bar-wrap"><div class="comp-bar er" style="width:63.6%"></div></div>
+    </div>
+  </div>
+
+  <!-- SENTIMENT VALIDATION -->
+  <div class="section-title">Validasi Sentimen via AI Recheck — NLI Dataset (Kanal BI)</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Distribusi Sentimen Pasca-AI Recheck per Klaster</div>
+      <canvas id="chartSentiment" height="210"></canvas>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#C0392B;display:inline-block"></span>Negatif</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#95A5A6;display:inline-block"></span>Netral</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#27AE60;display:inline-block"></span>Positif</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tabel Perbandingan Sentimen — AI Recheck (Kanal BI)</div>
+      <table class="val-table">
+        <thead>
+          <tr><th style="text-align:left">Klaster</th><th>N Data</th><th>Negatif</th><th>Netral</th><th>Positif</th><th>Sumber</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="isu-col">🏦 Rupiah</td><td>2.874</td><td class="pneg">35,28%</td><td class="pneu">52,57%</td><td class="ppos">12,14%</td><td><small>AI Recheck</small></td></tr>
+          <tr><td class="isu-col">📈 Inflasi</td><td>242</td><td class="pneg">16,0%</td><td class="pneu">75,0%</td><td class="ppos">9,0%</td><td><small>NS Proxy</small></td></tr>
+          <tr><td class="isu-col">🏛️ BI-Rate</td><td>5.374</td><td class="pneg">25,7%</td><td class="pneu">53,8%</td><td class="ppos">20,5%</td><td><small>AI Recheck</small></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px">
+        <div class="card-title">Rupiah: Sentimen Vendor vs AI Recheck</div>
+        <div class="sent-row">
+          <div class="sent-lbl">Vendor</div>
+          <div class="sent-bar-wrap">
+            <div class="s-neg" style="width:17.6%"></div>
+            <div class="s-neu" style="width:61.3%"></div>
+            <div class="s-pos" style="width:21.1%"></div>
+          </div>
+          <div class="sent-pct">Neg 17,6% · Net 61,3% · Pos 21,1%</div>
+        </div>
+        <div class="sent-row">
+          <div class="sent-lbl">AI Recheck</div>
+          <div class="sent-bar-wrap">
+            <div class="s-neg" style="width:35.3%"></div>
+            <div class="s-neu" style="width:52.6%"></div>
+            <div class="s-pos" style="width:12.1%"></div>
+          </div>
+          <div class="sent-pct">Neg 35,3% · Net 52,6% · Pos 12,1%</div>
+        </div>
+        <div style="font-size:10px;color:#C0392B;margin-top:6px;padding:6px 8px;background:#FEF0F0;border-radius:6px">
+          ⚠️ AI Recheck mendeteksi sentimen negatif <strong>2× lebih tinggi</strong> vs vendor — validasi independen krusial untuk akurasi IIRS
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RADAR + IIRS COMPARISON -->
+  <div class="section-title">Radar Profil Risiko &amp; Perbandingan IIRS</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Profil Multidimensi per Klaster (NS · VA · ER · Score · IIRS)</div>
+      <canvas id="chartRadar" height="280"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Perbandingan Score NoLimit vs Sentrix vs IIRS Final</div>
+      <canvas id="chartIIRS" height="280"></canvas>
+    </div>
+  </div>
+
+</div>
+</div><!-- /tab-analisis -->
+
+
+<!-- ════════════════════════════════════════
+     TAB 3: PROTOKOL TCRP
+════════════════════════════════════════ -->
+<div id="tab-tcrp" class="tab-panel">
+<div class="container">
+
+  <div class="section-title">Tiered Communication Response Protocol (TCRP) — Panduan Lengkap</div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <span style="font-size:11px;font-weight:600;color:var(--muted)">Status April 2026:</span>
+    <span class="kbadge sedang"><span class="dpulse"></span>Rupiah — Tier 2 Sedang</span>
+    <span class="kbadge sedang"><span class="dpulse"></span>BI-Rate — Tier 2 Sedang</span>
+    <span class="kbadge ringan"><span class="dpulse"></span>Inflasi — Tier 1 Ringan</span>
+  </div>
+
+  <div class="g3">
+    <!-- TIER 1 -->
+    <div class="tier-card tier1">
+      <div class="tier-header"><div class="tier-name t1">Tier 1 — Ringan</div><div class="tier-range t1">IIRS 0–35</div></div>
+      <div class="tier-row"><div class="tier-icon">📋</div><div class="tier-detail"><strong>Eskalasi:</strong> DP2K (IIRS Lead Ext) &amp; DLIPKD (Co-Lead Int) susun laporan mingguan terintegrasi ke Kepala Divisi DKom terkait.</div></div>
+      <div class="tier-row"><div class="tier-icon">👥</div><div class="tier-detail"><strong>Tim:</strong> DP2K (koordinator insight &amp; tema bulanan) · DLIPKD (eksekutor digital) · DROM (relasi media rutin) · TRPI (cascading 46 KPwDN) · DRLP2 (jejaring akademisi &amp; FGD).</div></div>
+      <div class="tier-row"><div class="tier-icon">📢</div><div class="tier-detail"><strong>Pendekatan:</strong> Proactive education. Konten organik edukatif (evergreen), paid promotion ringan. Taklimat Media (2 bulanan) · Training Wartawan (3 bulanan) · Editor Briefing (6 bulanan) · FGD Pemred &amp; KOL (6 bulanan) · FGD Akademisi (6 bulanan).</div></div>
+      <div class="tier-row"><div class="tier-icon">🔄</div><div class="tier-detail"><strong>De-eskalasi:</strong> IIRS &gt;35 → naik Tier 2. Evaluasi bulanan oleh Kepala Divisi. Feedback: identifikasi tema &amp; kanal berkinerja tinggi.</div></div>
+      <div class="sla-badge t1">⏱ SLA: Maks. 24 jam</div>
+    </div>
+
+    <!-- TIER 2 -->
+    <div class="tier-card tier2">
+      <div class="tier-header"><div class="tier-name t2">Tier 2 — Sedang</div><div class="tier-range t2">IIRS 36–59</div></div>
+      <div class="tier-row"><div class="tier-icon">📋</div><div class="tier-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun joint issue brief, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, disuarakan dalam RDGM. Fase Siaga (50–59): eskalasi ke DKEM/DKMP/DKSP.</div></div>
+      <div class="tier-row"><div class="tier-icon">👥</div><div class="tier-detail"><strong>Tim &amp; Jubir:</strong> DP2K (intelligence center) · DLIPKD (konten tematik) · DROM (intensifikasi media &amp; KOL) · TRPI (synchronized 46 KPwDN) · DRLP2 (akademisi). Jubir: Kepala Grup/Kepala Satker.</div></div>
+      <div class="tier-row"><div class="tier-icon">📢</div><div class="tier-detail"><strong>Pesan &amp; Kanal:</strong> Klarifikasi reaktif + edukasi tematik intensif. +1 pertemuan tematik semua kanal. Paid promotion diperbesar, influencer/kreator diaktifkan, clipper selektif.</div></div>
+      <div class="tier-row"><div class="tier-icon">🔗</div><div class="tier-detail"><strong>Validasi substansi:</strong> Koordinasi satker substansi (DKEM/DKMP/DKSP) — mandatory untuk talking head &amp; official statement, advisory untuk konten edukasi.</div></div>
+      <div class="tier-row"><div class="tier-icon">🔄</div><div class="tier-detail"><strong>De-eskalasi:</strong> IIRS stabil &lt;36 → turun Tier 1 (pengesahan Kepala Grup). Evaluasi mingguan ke RDGM. Dokumentasi key message library.</div></div>
+      <div class="sla-badge t2">⏱ SLA: Maks. 12 jam sejak IIRS menembus 36</div>
+    </div>
+
+    <!-- TIER 3 -->
+    <div class="tier-card tier3">
+      <div class="tier-header"><div class="tier-name t3">Tier 3 — Crisis</div><div class="tier-range t3">IIRS ≥60</div></div>
+      <div class="tier-row"><div class="tier-icon">🚨</div><div class="tier-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun executive brief → ADG Bidang (Chair CMC) → Gubernur BI untuk pengesahan strategic narrative.</div></div>
+      <div class="tier-row"><div class="tier-icon">👥</div><div class="tier-detail"><strong>Jubir:</strong> Layer-1 (Strategis) = Gubernur BI · Layer-2 (Operasional) = ADG Bidang · Layer-3 (Teknis) = Kepala Satker DKom. Otoritas pemutus: Gubernur BI via CMC.</div></div>
+      <div class="tier-row"><div class="tier-icon">📢</div><div class="tier-detail"><strong>Pendekatan:</strong> Crisis containment → Pemulihan Reputasi. Holding statement secepatnya → klarifikasi penuh + bukti. Optimalisasi 6 kanal BI + paid promotion maksimal + koalisi influencer + clipper + homeless media.</div></div>
+      <div class="tier-row"><div class="tier-icon">🤝</div><div class="tier-detail"><strong>Koordinasi Eksternal:</strong> KSSK (Kemenkeu/OJK/LPS) untuk penyelarasan narasi lintas otoritas. Briefing DPR Komisi XI bila isu menyentuh ranah parlementer.</div></div>
+      <div class="tier-row"><div class="tier-icon">🔄</div><div class="tier-detail"><strong>De-eskalasi:</strong> IIRS stabil &lt;60 → turun Tier 2 (pengesahan Kepala Satker DKom). Evaluasi harian. Post-mortem terstruktur pasca de-eskalasi.</div></div>
+      <div class="sla-badge t3">⏱ SLA: Maks. 6 jam sejak IIRS menembus 60</div>
+    </div>
+  </div>
+
+  <!-- MATRIX -->
+  <div class="card" style="margin-top:14px;overflow-x:auto">
+    <div class="card-title">Matriks Ringkasan TCRP — Perbandingan Lintas Tier</div>
+    <table class="mx-table">
+      <thead>
+        <tr><th style="background:#F8F9FB">Aspek</th><th class="h1">Tier 1 — Ringan (0–35)</th><th class="h2">Tier 2 — Sedang (36–59)</th><th class="h3">Tier 3 — Crisis (≥60)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SLA Respons</td><td>24 jam</td><td>12 jam (6 jam Siaga)</td><td>6 jam</td></tr>
+        <tr><td>Otoritas Pemutus</td><td>Kepala Divisi DKom</td><td>Kepala Satker DKom</td><td>Gubernur BI (via CMC)</td></tr>
+        <tr><td>Juru Bicara</td><td>—</td><td>Kepala Grup / Kepala Satker</td><td>Gubernur / ADG / Kasatker</td></tr>
+        <tr><td>Paid Promotion</td><td>Ringan</td><td>Diperbesar</td><td>Maksimal</td></tr>
+        <tr><td>Influencer / Kreator</td><td>Tidak aktif</td><td>Selektif (mulai diaktifkan)</td><td>Koalisi penuh + clipper + homeless media</td></tr>
+        <tr><td>Evaluasi</td><td>Bulanan</td><td>Mingguan (RDGM)</td><td>Harian (Kasatker &amp; ADG)</td></tr>
+        <tr><td>Koordinasi Eksternal</td><td>Tidak ada</td><td>DKEM / DKMP / DKSP</td><td>KSSK + DPR Komisi XI</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div><!-- /tab-tcrp -->
+
+<div class="footer">
+  Dashboard EWS Komunikasi Kebijakan BI — SESMUBI Angkatan 14 Kelompok 14 &nbsp;|&nbsp;
+  Hilmy Mu'nis · Ridwan Suryo Pranowo · Yudho Wijoseno · Rino Yudha Prakasa &nbsp;|&nbsp; April 2026
+</div>
+
+<script>
+// ── TAB SWITCHING ──
+const chartsReady = { 'tab-overview': true, 'tab-analisis': false, 'tab-tcrp': true };
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+  if (!chartsReady[id]) { chartsReady[id] = true; initAnalisisCharts(); }
+}
+
+// ── SPEEDOMETER GAUGE ──
+function drawGauge(canvasId, value, tierLabel, tierColor) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H - 18;
+  const R = Math.min(cx, cy) - 6;
+  const tw = 13;
+  ctx.clearRect(0, 0, W, H);
+
+  // angle: value 0 → π (left), value 100 → 2π (right), going clockwise through top
+  const ang = v => Math.PI + (v / 100) * Math.PI;
+
+  // Zone arcs
+  const zones = [[0,35,'#27AE60'],[35,50,'#F39C12'],[50,60,'#E67E22'],[60,100,'#C0392B']];
+  zones.forEach(([f, t, c]) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, ang(f), ang(t), false);
+    ctx.lineWidth = tw; ctx.strokeStyle = c; ctx.lineCap = 'butt'; ctx.stroke();
+  });
+
+  // Inner fill
+  ctx.beginPath();
+  ctx.arc(cx, cy, R - tw - 1, Math.PI, 2 * Math.PI, false);
+  ctx.closePath();
+  ctx.fillStyle = '#F8F9FB'; ctx.fill();
+
+  // Boundary ticks at 35, 50, 60
+  [35,50,60].forEach(v => {
+    const a = ang(v);
+    const r1 = R - tw, r2 = R + 3;
+    ctx.beginPath();
+    ctx.moveTo(cx + r1*Math.cos(a), cy + r1*Math.sin(a));
+    ctx.lineTo(cx + r2*Math.cos(a), cy + r2*Math.sin(a));
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+  });
+
+  // Small ticks every 10 units
+  for (let v = 0; v <= 100; v += 10) {
+    if ([35,50,60].includes(v)) continue;
+    const a = ang(v);
+    const r1 = R - tw + 2, r2 = R - 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + r1*Math.cos(a), cy + r1*Math.sin(a));
+    ctx.lineTo(cx + r2*Math.cos(a), cy + r2*Math.sin(a));
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.stroke();
+  }
+
+  // Value text (inside arc)
+  ctx.textAlign = 'center';
+  ctx.font = `bold 18px 'Segoe UI', Arial`;
+  ctx.fillStyle = tierColor;
+  ctx.fillText(value.toFixed(2).replace('.', ','), cx, cy - R + tw + 28);
+
+  // Tier label
+  ctx.font = `bold 8px 'Segoe UI', Arial`;
+  ctx.fillStyle = '#7F8C8D';
+  ctx.fillText(tierLabel, cx, cy - R + tw + 40);
+
+  // Needle
+  const na = ang(value);
+  const nLen = R - tw - 5;
+  ctx.beginPath();
+  ctx.moveTo(cx - 5 * Math.cos(na), cy - 5 * Math.sin(na));
+  ctx.lineTo(cx + nLen * Math.cos(na), cy + nLen * Math.sin(na));
+  ctx.lineWidth = 2.5; ctx.strokeStyle = '#1A252F'; ctx.lineCap = 'round'; ctx.stroke();
+
+  // Center dot
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, 2*Math.PI);
+  ctx.fillStyle = '#1A252F'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI);
+  ctx.fillStyle = '#fff'; ctx.fill();
+
+  // Min/Max labels
+  ctx.font = `7px 'Segoe UI', Arial`; ctx.fillStyle = '#AAB7B8';
+  ctx.textAlign = 'left'; ctx.fillText('0', 3, cy + 13);
+  ctx.textAlign = 'right'; ctx.fillText('100', W - 3, cy + 13);
+}
+
+drawGauge('gaugeRupiah', 47.28, 'SEDANG', '#E67E22');
+drawGauge('gaugeInflasi', 33.26, 'RINGAN', '#27AE60');
+drawGauge('gaugeBIRate', 37.42, 'SEDANG', '#E67E22');
+
+// ── ANALISIS CHARTS (lazy init) ──
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#7F8C8D';
+
+let analisisChartsDone = false;
+function initAnalisisCharts() {
+  if (analisisChartsDone) return;
+  analisisChartsDone = true;
+
+  const compOpts = (title) => ({
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw*100).toFixed(1) + '%' } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { min: 0, max: 1.1, ticks: { callback: v => Math.round(v*100) + '%' }, grid: { color: '#F0F0F0' } }
+    }
+  });
+
+  new Chart(document.getElementById('chartSentrix'), {
+    type: 'bar',
+    data: {
+      labels: ['Rupiah', 'Inflasi', 'BI-Rate'],
+      datasets: [
+        { label: 'NS (Neg. Sentiment)', data: [0.326,0.090,0.250], backgroundColor:'rgba(192,57,43,.8)', borderColor:'#C0392B', borderWidth:1 },
+        { label: 'VA (Volume Anomaly)', data: [0.101,0.580,0.170], backgroundColor:'rgba(243,156,18,.8)', borderColor:'#F39C12', borderWidth:1 },
+        { label: 'ER (Exposure & Reach)',data: [1.000,0.840,1.000], backgroundColor:'rgba(52,152,219,.8)', borderColor:'#3498DB', borderWidth:1 },
+      ]
+    },
+    options: compOpts('Sentrix')
+  });
+
+  new Chart(document.getElementById('chartNoLimit'), {
+    type: 'bar',
+    data: {
+      labels: ['Rupiah', 'Inflasi', 'BI-Rate'],
+      datasets: [
+        { label: 'NS (Neg. Sentiment)', data: [0.350,0.160,0.216], backgroundColor:'rgba(192,57,43,.8)', borderColor:'#C0392B', borderWidth:1 },
+        { label: 'VA (Volume Anomaly)', data: [0.170,0.000,0.304], backgroundColor:'rgba(243,156,18,.8)', borderColor:'#F39C12', borderWidth:1 },
+        { label: 'ER (Exposure & Reach)',data: [1.000,0.250,0.271], backgroundColor:'rgba(52,152,219,.8)', borderColor:'#3498DB', borderWidth:1 },
+      ]
+    },
+    options: compOpts('NoLimit')
+  });
+
+  new Chart(document.getElementById('chartSentiment'), {
+    type: 'bar',
+    data: {
+      labels: ['Rupiah (2.874)', 'Inflasi (242)', 'BI-Rate (5.374)'],
+      datasets: [
+        { label: 'Negatif', data: [35.28,16.0,25.7], backgroundColor:'rgba(192,57,43,.85)', borderColor:'#C0392B', borderWidth:1 },
+        { label: 'Netral',  data: [52.57,75.0,53.8], backgroundColor:'rgba(149,165,166,.85)',borderColor:'#95A5A6', borderWidth:1 },
+        { label: 'Positif', data: [12.14, 9.0,20.5], backgroundColor:'rgba(39,174,96,.85)',  borderColor:'#27AE60', borderWidth:1 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position:'bottom', labels:{ boxWidth:10, padding:10 } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.raw.toFixed(1)+'%' } } },
+      scales: {
+        x: { stacked:true, grid:{ display:false } },
+        y: { stacked:true, min:0, max:100, ticks:{ callback: v => v+'%' }, grid:{ color:'#F0F0F0' } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartRadar'), {
+    type: 'radar',
+    data: {
+      labels: ['NS (×100)','VA (×100)','ER (×100)','Score NoLimit','Score Sentrix','IIRS'],
+      datasets: [
+        { label:'Rupiah',  data:[33.8,13.6,100,49.10,46.07,47.28], backgroundColor:'rgba(230,126,34,.15)', borderColor:'#E67E22', pointBackgroundColor:'#E67E22', borderWidth:2, pointRadius:4 },
+        { label:'Inflasi', data:[12.5,29.0,54.5,13.90,46.20,33.26], backgroundColor:'rgba(39,174,96,.15)',  borderColor:'#27AE60', pointBackgroundColor:'#27AE60', borderWidth:2, pointRadius:4 },
+        { label:'BI-Rate', data:[23.3,23.7,63.6,25.89,45.10,37.42], backgroundColor:'rgba(231,76,60,.15)',  borderColor:'#E74C3C', pointBackgroundColor:'#E74C3C', borderWidth:2, pointRadius:4 },
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:10 } } },
+      scales:{ r:{ min:0, max:110, grid:{ color:'#E0E6EF' }, pointLabels:{ font:{ size:10 }, color:'#555' }, ticks:{ display:false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chartIIRS'), {
+    type: 'bar',
+    data: {
+      labels: ['Rupiah','Inflasi','BI-Rate'],
+      datasets: [
+        { label:'Score NoLimit (40%)', data:[49.10,13.90,25.89], backgroundColor:'rgba(196,18,48,.7)', borderColor:'#C41230', borderWidth:1 },
+        { label:'Score Sentrix (60%)', data:[46.07,46.20,45.10], backgroundColor:'rgba(52,152,219,.7)', borderColor:'#3498DB', borderWidth:1 },
+        { label:'IIRS Final', data:[47.28,33.26,37.42], backgroundColor:'rgba(44,62,80,.85)', borderColor:'#2C3E50', borderWidth:2, type:'line', borderDash:[5,4], pointRadius:6, pointBackgroundColor:'#2C3E50', tension:.3 },
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:10 } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.raw.toFixed(2) } } },
+      scales:{ x:{ grid:{ display:false } }, y:{ min:0, max:70, grid:{ color:'#F0F0F0' } } }
+    }
+  });
+}
+</script>
+</body>
+</html>

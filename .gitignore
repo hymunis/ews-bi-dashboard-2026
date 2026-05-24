@@ -1,0 +1,10 @@
+# Data files — tidak perlu di-deploy
+*.xlsx
+*.docx
+File Olah Data Google Collab/
+
+# Claude internal
+.claude/
+
+# System
+.DS_Store
