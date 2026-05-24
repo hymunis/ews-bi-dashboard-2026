@@ -1143,8 +1143,10 @@ function copyPrompt() {
     setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 Salin Konteks EWS'; }, 2000);
   });
 }
-document.getElementById('aiOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeAI();
+// defer until DOM fully parsed (aiOverlay is placed after this script block)
+window.addEventListener('DOMContentLoaded', function(){
+  const _ov = document.getElementById('aiOverlay');
+  if (_ov) _ov.addEventListener('click', function(e){ if (e.target === this) closeAI(); });
 });
 
 /* ═══════════════════════════════════════════════════════════
@@ -1179,16 +1181,63 @@ function parseINFO(sh){
 }
 
 function parseSOURCE_SCORE(sh,bNL,bSX){
-  const rows=shR(sh), h=rows[0].map(nk);
-  const [iK,iV,iN,iVA,iER]=[h.indexOf('KLASTER'),h.indexOf('VENDOR'),h.indexOf('NS'),h.indexOf('VA'),h.indexOf('ER')];
+  const rows=shR(sh);
+  const CLUSTERS=['Rupiah','Inflasi','BI-Rate'];
   const g={};
-  rows.slice(1).forEach(r=>{
-    const k=String(r[iK]||'').trim(); if(!k) return;
-    const v=nk(r[iV]||''), ns=parseFloat(r[iN]||0), va=parseFloat(r[iVA]||0), er=parseFloat(r[iER]||0);
-    if(!g[k]) g[k]={};
-    const vk=(v.includes('NOLIMIT')||v.includes('NO_LIMIT')||v==='NL')?'nl':'sx';
-    g[k][vk]={ns,va,er,score:calcSS(ns,va,er)};
-  });
+
+  /* ── Mode 1: Section-based format ─────────────────────────────────────
+     Detects vendor by section-header rows ("Sentrix Telkomsel" / "No Limit"),
+     then reads column headers and data rows within each section.
+     Handles the actual "Perhitungan Data" file structure.
+  ──────────────────────────────────────────────────────────────────────── */
+  let curV=null, hIdx={k:-1,n:-1,va:-1,er:-1};
+  for(const row of rows){
+    const cells=row.map(c=>nk(c||''));
+    const first=cells[0]||'';
+    // Vendor section header detection
+    if(first.includes('SENTRIX')||first==='ST'||first.includes('SENTRI')){
+      curV='sx'; hIdx={k:-1,n:-1,va:-1,er:-1}; continue;
+    }
+    if(first==='NO_LIMIT'||first.includes('NOLIMIT')||first==='NLI'||first==='NL'||
+       first.includes('NO_LIMIT')||first.startsWith('NO_LIMIT')){
+      curV='nl'; hIdx={k:-1,n:-1,va:-1,er:-1}; continue;
+    }
+    // Header row: must contain 'NS' column
+    if(cells.indexOf('NS')>=0){
+      hIdx.k=cells.findIndex(c=>c==='ISSUE_CLUSTER'||c==='KLASTER'||c==='CLUSTER_ISSUE'||c==='CLUSTER'||c==='ISU');
+      hIdx.n=cells.indexOf('NS');
+      hIdx.va=cells.indexOf('VA');
+      hIdx.er=cells.indexOf('ER');
+      continue;
+    }
+    // Data row
+    if(curV!==null&&hIdx.n>=0){
+      const rawK=String(row[hIdx.k>=0?hIdx.k:0]||'').trim(); if(!rawK) continue;
+      const kl=CLUSTERS.find(c=>rawK.toLowerCase()===c.toLowerCase()||nk(rawK)===nk(c));
+      if(!kl) continue;
+      const ns=parseFloat(row[hIdx.n])||0;
+      const va=hIdx.va>=0?parseFloat(row[hIdx.va])||0:0;
+      const er=hIdx.er>=0?parseFloat(row[hIdx.er])||0:0;
+      if(!g[kl])g[kl]={};
+      g[kl][curV]={ns,va,er,score:calcSS(ns,va,er)};
+    }
+  }
+
+  /* ── Mode 2: Column-based format (original template) ──────────────────
+     Falls back to flat table with KLASTER / VENDOR columns.
+  ──────────────────────────────────────────────────────────────────────── */
+  if(!Object.keys(g).length){
+    const h=rows[0]?rows[0].map(nk):[];
+    const iK=h.indexOf('KLASTER'),iV=h.indexOf('VENDOR'),iN=h.indexOf('NS'),iVA=h.indexOf('VA'),iER=h.indexOf('ER');
+    rows.slice(1).forEach(r=>{
+      const k=String(r[iK>=0?iK:0]||'').trim(); if(!k) return;
+      const v=nk(r[iV>=0?iV:1]||''), ns=parseFloat(r[iN]||0)||0, va=parseFloat(r[iVA]||0)||0, er=parseFloat(r[iER]||0)||0;
+      if(!g[k])g[k]={};
+      const vk=(v.includes('NOLIMIT')||v.includes('NO_LIMIT')||v==='NL')?'nl':'sx';
+      g[k][vk]={ns,va,er,score:calcSS(ns,va,er)};
+    });
+  }
+
   const result={};
   Object.entries(g).forEach(([k,vd])=>{
     const nl=vd.nl||{ns:0,va:0,er:0,score:0}, sx=vd.sx||{ns:0,va:0,er:0,score:0};
