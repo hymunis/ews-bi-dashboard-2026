@@ -592,79 +592,6 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   </div>
   <p style="font-size:10px;color:var(--muted);text-align:right;margin-bottom:4px">Sumber: NLI Dataset (Kanal BI) &amp; ST Dataset (Non-Kanal BI) — AI Recheck Sentimen: Negatif | April 2026</p>
 
-  <!-- SOURCE SCORE — OVERVIEW (bottom) -->
-  <div class="section-title" style="margin-top:28px" id="ews-score-section-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
-  <div class="g12" id="ews-g12-ov">
-    <div>
-      <div class="formula-box">
-        <div class="ft">Formula IIRS &amp; Source Score</div>
-        <span class="hi">IIRS</span> = <span style="color:#F1948A">0,40</span> × Score<sub>NoLimit</sub> + <span class="blu">0,60</span> × Score<sub>Sentrix</sub><br><br>
-        <span class="hi">Source Score</span> = 100 × [<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,40</span> × <span class="grn">NS</span> +<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">VA</span> +<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">ER</span><br>
-        ]<br><br>
-        <span style="color:#AAB7B8">NS</span> = Negative Sentiment Ratio<br>
-        <span style="color:#AAB7B8">VA</span> = Volume Anomaly Ratio<br>
-        <span style="color:#AAB7B8">ER</span> = Exposure &amp; Reach Ratio
-      </div>
-      <div class="card" style="margin-top:10px;padding:14px">
-        <div class="card-title">Bobot Vendor</div>
-        <div style="font-size:11px;margin-bottom:7px">
-          <span class="vtag nl">No Limit Indonesia</span> = Kanal BI (Bobot <strong>40%</strong>)<br>
-          <small style="color:var(--muted)">Sentimen di kanal resmi BI — relatif terkendali</small>
-        </div>
-        <hr class="div">
-        <div style="font-size:11px">
-          <span class="vtag sx">Sentrix Telkomsel</span> = Non-Kanal BI (Bobot <strong>60%</strong>)<br>
-          <small style="color:var(--muted)">Ruang publik eksternal — representasi reputational risk sesungguhnya</small>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
-      <table class="score-table">
-        <thead>
-          <tr><th>Klaster</th><th>Vendor</th><th style="text-align:center">NS</th><th style="text-align:center">VA</th><th style="text-align:center">ER</th><th style="text-align:center">Score</th><th>Visualisasi</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏦 Rupiah</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,350</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">49,10</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:49.1%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,326</td><td style="text-align:center">0,101</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">46,07</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.1%"></div></div></td>
-          </tr>
-          <tr style="border-top:2px solid var(--border)">
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">📈 Inflasi</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,160</td><td style="text-align:center">0,000</td><td style="text-align:center">0,250</td>
-            <td style="text-align:center"><span class="score-badge badge-r">13,90</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:13.9%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,090</td><td style="text-align:center">0,580</td><td style="text-align:center">0,840</td>
-            <td style="text-align:center"><span class="score-badge badge-s">46,20</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.2%"></div></div></td>
-          </tr>
-          <tr style="border-top:2px solid var(--border)">
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏛️ BI-Rate</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,216</td><td style="text-align:center">0,304</td><td style="text-align:center">0,271</td>
-            <td style="text-align:center"><span class="score-badge badge-r">25,89</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:25.9%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,250</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">45,10</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:45.1%"></div></div></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
 </div><!-- /container overview -->
 </div><!-- /tab-overview -->
@@ -1832,8 +1759,6 @@ function parseDATASET(sh){
 /* ── Render functions ─────────────────────────────── */
 function rnPeriod(p){
   const el=document.getElementById('period-badge'); if(el) el.textContent=`📅 Periode Pemantauan: ${p}`;
-  const t=document.getElementById('ews-score-section-title');
-  if(t) t.textContent=`Hasil Perhitungan Source Score per Vendor (${p})`;
 }
 
 function rnDatasetBar(ds){
@@ -1899,7 +1824,7 @@ function rnExecPara(sc,p){
 }
 
 function rnSourceScoreTable(sc){
-  ['ews-g12-ov','ews-g12-an'].forEach(gid=>{
+  ['ews-g12-an'].forEach(gid=>{
     const g=document.getElementById(gid); if(!g) return;
     const tb=g.querySelector('tbody'); if(!tb) return;
     tb.innerHTML=Object.entries(KL).map(([k,m])=>{
