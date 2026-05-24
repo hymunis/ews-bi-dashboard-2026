@@ -239,9 +239,23 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 
 <!-- HEADER -->
 <div class="header">
-  <div>
-    <h1>Dashboard Integratif EWS Komunikasi Kebijakan BI</h1>
-    <h2>Integrated Issue Risk Score (IIRS) &amp; Tiered Communication Response Protocol (TCRP)</h2>
+  <div style="display:flex;align-items:center;gap:18px">
+    <!-- BI Logo SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 72" width="72" height="54" style="flex-shrink:0">
+      <polygon points="12,26 48,10 84,26" fill="rgba(255,255,255,0.92)"/>
+      <rect x="14" y="26" width="68" height="3" fill="rgba(255,255,255,0.92)" rx="1"/>
+      <rect x="17" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
+      <rect x="29" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
+      <rect x="41" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
+      <rect x="53" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
+      <rect x="65" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
+      <rect x="13" y="47" width="70" height="3.5" fill="rgba(255,255,255,0.92)" rx="1"/>
+      <text x="48" y="62" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Arial,sans-serif" font-weight="800" font-size="8.5" letter-spacing="2">BANK INDONESIA</text>
+    </svg>
+    <div style="border-left:1px solid rgba(255,255,255,0.3);padding-left:18px">
+      <h1>Dashboard Early Warning System Komunikasi Kebijakan Bank Indonesia</h1>
+      <h2>Integrated Issue Risk Score (IIRS) &amp; Tiered Communication Response Protocol (TCRP)</h2>
+    </div>
   </div>
   <div>
     <div class="period-badge">📅 Periode Pemantauan: April 2026</div>
@@ -262,26 +276,49 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 <div id="tab-overview" class="tab-panel active">
 <div class="container">
 
-  <!-- IIRS SUMMARY -->
-  <div class="section-title">Skor IIRS &amp; Status Tier — Ringkasan Eksekutif</div>
+  <!-- EXECUTIVE BRIEF PARAGRAPH -->
+  <div class="section-title" style="margin-top:18px">Ringkasan Eksekutif — Kondisi &amp; Rekomendasi Tindak Lanjut</div>
+  <div class="card" style="border-left:4px solid var(--bi-navy);padding:16px 20px;background:linear-gradient(135deg,#F7F9FC,#EEF3FA)">
+    <p style="font-size:12.5px;line-height:1.9;color:var(--text);margin:0">
+      Per <strong>April 2026</strong>, sistem EWS Komunikasi Kebijakan Bank Indonesia mencatat bahwa dari tiga klaster isu yang dipantau, <strong>dua klaster — Rupiah (IIRS 47,28) dan BI-Rate (IIRS 37,42) — berada pada Tier 2 Sedang</strong> dengan SLA respons 12 jam, sementara Inflasi masih terkendali di Tier 1 Ringan (IIRS 33,26). Kondisi paling kritis ditunjukkan oleh Klaster Rupiah yang hanya berjarak <strong>2,72 poin dari ambang Siaga (50)</strong>, dengan ER Sentrix sudah mencapai saturasi 100% — mengindikasikan jangkauan eksternal yang sudah maksimal dan risiko eskalasi sangat tinggi apabila sentimen negatif bertambah. Klaster BI-Rate turut mencatat ER 100% sehingga setiap peningkatan Negative Sentiment akan langsung mendorong IIRS naik tanpa buffer. Inflasi, meski masih di Tier 1, perlu diwaspadai karena Volume Anomaly Sentrix mencapai 58%, yang merupakan leading indicator potensi lonjakan. Data bersumber dari <strong>41.129 konten</strong> yang dipantau selama April 2026 dari dua vendor (NoLimit Indonesia sebagai Kanal BI berbobot 40%, Sentrix Telkomsel sebagai Non-Kanal BI berbobot 60%). <strong>Rekomendasi:</strong> Aktivasi <em>joint issue brief</em> segera untuk Rupiah dan BI-Rate, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, intensifikasi konten di seluruh kanal BI, serta pemantauan ketat threshold Siaga Rupiah sebelum RDG berikutnya.
+    </p>
+  </div>
+
+  <!-- IIRS SUMMARY + GAUGE INTEGRATED -->
+  <div class="section-title">Skor IIRS &amp; Posisi Tier — Ringkasan Eksekutif</div>
+  <!-- Dataset stats bar -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--muted)">
+    <span style="background:#F0F4F8;border:1px solid var(--border);border-radius:6px;padding:4px 10px"><strong style="color:var(--bi-navy)">41.129</strong> total konten dipantau</span>
+    <span style="background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:4px 10px"><strong style="color:#9B1C1C">NoLimit (Kanal BI)</strong>: 3.167 konten — Rupiah 2.874 · Inflasi 242 · BI-Rate 51</span>
+    <span style="background:#EBF5FB;border:1px solid #85C1E9;border-radius:6px;padding:4px 10px"><strong style="color:#1A5276">Sentrix (Non-Kanal BI)</strong>: 37.962 konten — Rupiah 15.167 · Inflasi 17.421 · BI-Rate 5.374</span>
+  </div>
   <div class="g3">
-    <div class="iirs-card sedang">
-      <div class="isu-label">🏦 Klaster: Rupiah</div>
-      <div class="score">47,28</div>
-      <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
-      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+    <div class="iirs-card sedang" style="display:flex;align-items:center;gap:10px;overflow:visible">
+      <div style="flex:1;min-width:0">
+        <div class="isu-label">🏦 Klaster: Rupiah</div>
+        <div class="score">47,28</div>
+        <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
+        <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+      </div>
+      <canvas id="gaugeRupiah" width="160" height="100" style="flex-shrink:0"></canvas>
     </div>
-    <div class="iirs-card ringan">
-      <div class="isu-label">📈 Klaster: Inflasi</div>
-      <div class="score">33,26</div>
-      <div class="tier-badge">✅ TIER 1 — RINGAN</div>
-      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 1</span></div>
+    <div class="iirs-card ringan" style="display:flex;align-items:center;gap:10px;overflow:visible">
+      <div style="flex:1;min-width:0">
+        <div class="isu-label">📈 Klaster: Inflasi</div>
+        <div class="score">33,26</div>
+        <div class="tier-badge">✅ TIER 1 — RINGAN</div>
+        <div class="protocol">Tindak Lanjut: <span>Panduan Respons 1</span></div>
+      </div>
+      <canvas id="gaugeInflasi" width="160" height="100" style="flex-shrink:0"></canvas>
     </div>
-    <div class="iirs-card sedang">
-      <div class="isu-label">🏛️ Klaster: BI-Rate</div>
-      <div class="score">37,42</div>
-      <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
-      <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+    <div class="iirs-card sedang" style="display:flex;align-items:center;gap:10px;overflow:visible">
+      <div style="flex:1;min-width:0">
+        <div class="isu-label">🏛️ Klaster: BI-Rate</div>
+        <div class="score">37,42</div>
+        <div class="tier-badge">⚠️ TIER 2 — SEDANG</div>
+        <div class="protocol">Tindak Lanjut: <span>Panduan Respons 2</span></div>
+      </div>
+      <canvas id="gaugeBIRate" width="160" height="100" style="flex-shrink:0"></canvas>
     </div>
   </div>
 
@@ -322,20 +359,77 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
     </div>
   </div>
 
-  <!-- COMPACT SPEEDOMETER GAUGES -->
-  <div class="section-title">Gauge — Posisi IIRS Tiap Klaster</div>
-  <div class="gauge-row">
-    <div class="gauge-cell">
-      <div class="g-label">🏦 Rupiah</div>
-      <canvas id="gaugeRupiah" width="220" height="135"></canvas>
+  <!-- SOURCE SCORE — OVERVIEW -->
+  <div class="section-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
+  <div class="g12">
+    <div>
+      <div class="formula-box">
+        <div class="ft">Formula IIRS &amp; Source Score</div>
+        <span class="hi">IIRS</span> = <span style="color:#F1948A">0,40</span> × Score<sub>NoLimit</sub> + <span class="blu">0,60</span> × Score<sub>Sentrix</sub><br><br>
+        <span class="hi">Source Score</span> = 100 × [<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,40</span> × <span class="grn">NS</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">VA</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">ER</span><br>
+        ]<br><br>
+        <span style="color:#AAB7B8">NS</span> = Negative Sentiment Ratio<br>
+        <span style="color:#AAB7B8">VA</span> = Volume Anomaly Ratio<br>
+        <span style="color:#AAB7B8">ER</span> = Exposure &amp; Reach Ratio
+      </div>
+      <div class="card" style="margin-top:10px;padding:14px">
+        <div class="card-title">Bobot Vendor</div>
+        <div style="font-size:11px;margin-bottom:7px">
+          <span class="vtag nl">No Limit Indonesia</span> = Kanal BI (Bobot <strong>40%</strong>)<br>
+          <small style="color:var(--muted)">Sentimen di kanal resmi BI — relatif terkendali</small>
+        </div>
+        <hr class="div">
+        <div style="font-size:11px">
+          <span class="vtag sx">Sentrix Telkomsel</span> = Non-Kanal BI (Bobot <strong>60%</strong>)<br>
+          <small style="color:var(--muted)">Ruang publik eksternal — representasi reputational risk sesungguhnya</small>
+        </div>
+      </div>
     </div>
-    <div class="gauge-cell">
-      <div class="g-label">📈 Inflasi</div>
-      <canvas id="gaugeInflasi" width="220" height="135"></canvas>
-    </div>
-    <div class="gauge-cell">
-      <div class="g-label">🏛️ BI-Rate</div>
-      <canvas id="gaugeBIRate" width="220" height="135"></canvas>
+    <div class="card">
+      <div class="card-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
+      <table class="score-table">
+        <thead>
+          <tr><th>Klaster</th><th>Vendor</th><th style="text-align:center">NS</th><th style="text-align:center">VA</th><th style="text-align:center">ER</th><th style="text-align:center">Score</th><th>Visualisasi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏦 Rupiah</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,350</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">49,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:49.1%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,326</td><td style="text-align:center">0,101</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,07</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.1%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">📈 Inflasi</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,160</td><td style="text-align:center">0,000</td><td style="text-align:center">0,250</td>
+            <td style="text-align:center"><span class="score-badge badge-r">13,90</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:13.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,090</td><td style="text-align:center">0,580</td><td style="text-align:center">0,840</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,20</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.2%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏛️ BI-Rate</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,216</td><td style="text-align:center">0,304</td><td style="text-align:center">0,271</td>
+            <td style="text-align:center"><span class="score-badge badge-r">25,89</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:25.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,250</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">45,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:45.1%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -464,80 +558,6 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 ════════════════════════════════════════ -->
 <div id="tab-analisis" class="tab-panel">
 <div class="container">
-
-  <!-- SOURCE SCORE -->
-  <div class="section-title">Source Score per Vendor — Bobot IIRS</div>
-  <div class="g12">
-    <div>
-      <div class="formula-box">
-        <div class="ft">Formula IIRS &amp; Source Score</div>
-        <span class="hi">IIRS</span> = <span style="color:#F1948A">0,40</span> × Score<sub>NoLimit</sub> + <span class="blu">0,60</span> × Score<sub>Sentrix</sub><br><br>
-        <span class="hi">Source Score</span> = 100 × [<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,40</span> × <span class="grn">NS</span> +<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">VA</span> +<br>
-        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">ER</span><br>
-        ]<br><br>
-        <span style="color:#AAB7B8">NS</span> = Negative Sentiment Ratio<br>
-        <span style="color:#AAB7B8">VA</span> = Volume Anomaly Ratio<br>
-        <span style="color:#AAB7B8">ER</span> = Exposure &amp; Reach Ratio
-      </div>
-      <div class="card" style="margin-top:10px;padding:14px">
-        <div class="card-title">Bobot Vendor</div>
-        <div style="font-size:11px;margin-bottom:7px">
-          <span class="vtag nl">No Limit Indonesia</span> = Kanal BI (Bobot <strong>40%</strong>)<br>
-          <small style="color:var(--muted)">Sentimen di kanal resmi BI — relatif terkendali</small>
-        </div>
-        <hr class="div">
-        <div style="font-size:11px">
-          <span class="vtag sx">Sentrix Telkomsel</span> = Non-Kanal BI (Bobot <strong>60%</strong>)<br>
-          <small style="color:var(--muted)">Ruang publik eksternal — representasi reputational risk sesungguhnya</small>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
-      <table class="score-table">
-        <thead>
-          <tr><th>Klaster</th><th>Vendor</th><th style="text-align:center">NS</th><th style="text-align:center">VA</th><th style="text-align:center">ER</th><th style="text-align:center">Score</th><th>Visualisasi</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏦 Rupiah</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,350</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">49,10</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:49.1%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,326</td><td style="text-align:center">0,101</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">46,07</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.1%"></div></div></td>
-          </tr>
-          <tr style="border-top:2px solid var(--border)">
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">📈 Inflasi</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,160</td><td style="text-align:center">0,000</td><td style="text-align:center">0,250</td>
-            <td style="text-align:center"><span class="score-badge badge-r">13,90</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:13.9%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,090</td><td style="text-align:center">0,580</td><td style="text-align:center">0,840</td>
-            <td style="text-align:center"><span class="score-badge badge-s">46,20</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.2%"></div></div></td>
-          </tr>
-          <tr style="border-top:2px solid var(--border)">
-            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏛️ BI-Rate</td>
-            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,216</td><td style="text-align:center">0,304</td><td style="text-align:center">0,271</td>
-            <td style="text-align:center"><span class="score-badge badge-r">25,89</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:25.9%"></div></div></td>
-          </tr>
-          <tr>
-            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,250</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
-            <td style="text-align:center"><span class="score-badge badge-s">45,10</span></td>
-            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:45.1%"></div></div></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
   <!-- NS VA ER CHARTS -->
   <div class="section-title">Dekomposisi Komponen NS · VA · ER per Klaster</div>
@@ -891,22 +911,16 @@ const NEG_DATA = {
     { klaster:'🏦 Rupiah', text:"Nilai Rupiah Tembus Rekor Terlemah Sepanjang Sejarah. Nilai tukar rupiah menembus rekor terlemah sepanjang sejarah dengan level 17.105 rupiah per dolar Amerika — bahkan lebih lemah dibandingkan saat krisis moneter 1998. Mata uang garuda melemah 70 poin dalam sehari di tengah derasnya tekanan eksternal." },
     { klaster:'🏦 Rupiah', text:"Indonesia Rupiah Ambruk ke Level Rp17.300 per Dolar AS. Rupiah kembali tertekan akibat kombinasi sentimen global negatif, penguatan dolar AS, dan ketidakpastian geopolitik di Timur Tengah. Publik mempertanyakan ketahanan fundamental ekonomi Indonesia dalam menahan tekanan eksternal yang terus meningkat." },
     { klaster:'🏦 Rupiah', text:"DPR Desak Pemerintah Jangan Andalkan BI Semata. Pelemahan nilai tukar rupiah menembus Rp17.000 per dolar AS mendapat sorotan tajam kalangan legislatif. Anggota Komisi XI DPR RI menyatakan kondisi ini bukan fluktuasi biasa, melainkan sinyal bahaya bagi perekonomian nasional yang membutuhkan respons terpadu." },
-    { klaster:'🏦 Rupiah', text:"Menteri Keuangan Purbaya menyebut saldo negara di Bank Indonesia tersisa Rp120 T, padahal awalnya mencapai Rp420 T karena Rp300 T dipindahkan. Pernyataan ini memicu kekhawatiran publik soal ketahanan fiskal dan cadangan devisa di tengah tekanan kurs yang terus berlanjut." },
-    { klaster:'🏦 Rupiah', text:"Rupiah tembus Rp17 ribuan per dolar bikin banyak orang panik. Meski BI menyebut rupiah undervalued, masyarakat tetap ngerasain harga kebutuhan yang makin mencekik. Narasi 'fundamental kuat' dinilai tidak cukup menjawab keresahan publik yang merasakan dampak langsung di dompet mereka setiap hari." }
   ],
   inflasi: [
     { klaster:'📈 Inflasi', text:"Lonjakan harga minyak dunia mulai membayangi ekonomi Indonesia. Dampaknya, inflasi berpotensi naik signifikan dan arah suku bunga bisa berubah drastis. Ekonom menyebut jika harga minyak bertahan di $100/barel, inflasi Indonesia bisa menembus batas atas target BI dan menghapus ruang stimulus moneter." },
     { klaster:'📈 Inflasi', text:"Dunia sedang menghadapi situasi ekonomi yang tidak baik-baik saja. Inflasi meningkat, krisis energi terjadi di banyak negara, harga BBM mulai naik. Indonesia ikut merasakan dampaknya: harga pangan melonjak, daya beli masyarakat tergerus, dan kebijakan moneter BI makin tersandera kondisi global." },
     { klaster:'📈 Inflasi', text:"Bank-bank selalu bicara soal 'kebijakan moneter yang hati-hati' setiap kali suku bunga naik. Tapi ada dampak yang jarang dijelaskan kepada publik: cicilan KPR naik, kredit UMKM makin mahal, dan daya beli masyarakat tergerus diam-diam. Komunikasi BI dinilai belum menjangkau kelompok yang paling terdampak." },
-    { klaster:'📈 Inflasi', text:"Imported inflation mulai dirasakan masyarakat bawah paling keras. Dampak pelemahan kurs ke harga impor, biaya produksi yang membengkak, dan lonjakan harga kebutuhan pokok terjadi lebih cepat dari yang diantisipasi. Kebijakan stabilisasi harga pangan dianggap belum memadai untuk meredam kepanikan publik." },
-    { klaster:'📈 Inflasi', text:"Kondisi pasar selama sepekan 20-24 April 2026 mengalami tekanan signifikan. IHSG terkoreksi tajam, rupiah melemah, dan ekspektasi inflasi masyarakat melonjak akibat kenaikan harga BBM non-subsidi. Dua tekanan sekaligus ini mempersulit pengendalian inflasi dan membebani ekspektasi ekonomi jangka pendek." }
   ],
   birate: [
     { klaster:'🏛️ BI-Rate', text:"Gubernur BI Perry Warjiyo memberi sinyal sulit menurunkan BI Rate dari level 4,75% karena kebijakan kini difokuskan pada upaya menjaga stabilitas akibat tekanan global. Peluang penurunan suku bunga semakin kecil, sementara pelaku usaha dan sektor riil membutuhkan stimulus segera untuk menopang pertumbuhan." },
     { klaster:'🏛️ BI-Rate', text:"Kebijakan BI menahan suku bunga diapresiasi untuk stabilitas, namun di lapangan pelaku UMKM mengeluh keras: akses kredit makin ketat, bunga pinjaman belum turun, sementara biaya operasional terus meningkat. Kesenjangan antara narasi kebijakan makro dan realitas bisnis mikro kian melebar." },
     { klaster:'🏛️ BI-Rate', text:"Bank Indonesia memutuskan menahan BI Rate sambil menunggu evaluasi dari MSCI. Di sisi lain, IHSG justru makin tertekan. Keputusan BI yang dianggap terlalu konservatif membuat investor mempertanyakan komitmen BI terhadap pertumbuhan — bukan hanya stabilitas nilai tukar semata." },
-    { klaster:'🏛️ BI-Rate', text:"Ruang penurunan BI Rate kian terbatas di tengah geopolitik global yang memanas. Eskalasi konflik mendorong kenaikan yield US Treasury, harga minyak melonjak, sehingga BI sulit bergerak untuk melonggarkan kebijakan moneter meski sektor riil meminta ruang ekspansi kredit yang lebih luas." },
-    { klaster:'🏛️ BI-Rate', text:"Rapat Dewan Gubernur BI April 2026 memutuskan mempertahankan BI-Rate 4,75%. Banyak pelaku usaha berharap BI segera menurunkan suku bunga untuk merangsang pertumbuhan. Narasi 'pro-stability' dari BI dinilai belum cukup meyakinkan publik yang melihat IHSG terus melemah dan investasi asing keluar." }
   ]
 };
 
