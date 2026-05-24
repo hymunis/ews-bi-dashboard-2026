@@ -240,17 +240,30 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 <!-- HEADER -->
 <div class="header">
   <div style="display:flex;align-items:center;gap:18px">
-    <!-- BI Logo SVG -->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 72" width="72" height="54" style="flex-shrink:0">
-      <polygon points="12,26 48,10 84,26" fill="rgba(255,255,255,0.92)"/>
-      <rect x="14" y="26" width="68" height="3" fill="rgba(255,255,255,0.92)" rx="1"/>
-      <rect x="17" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
-      <rect x="29" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
-      <rect x="41" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
-      <rect x="53" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
-      <rect x="65" y="29" width="7" height="18" fill="rgba(255,255,255,0.88)" rx="1"/>
-      <rect x="13" y="47" width="70" height="3.5" fill="rgba(255,255,255,0.92)" rx="1"/>
-      <text x="48" y="62" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Arial,sans-serif" font-weight="800" font-size="8.5" letter-spacing="2">BANK INDONESIA</text>
+    <!-- BI Logo SVG — monogram resmi -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="58" height="58" style="flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))">
+      <!-- Circle -->
+      <circle cx="50" cy="50" r="50" fill="#272484"/>
+      <!-- B — left spine -->
+      <rect x="21" y="18" width="10" height="64" fill="white"/>
+      <!-- B — upper bump outer -->
+      <path d="M31,18 L43,18 Q59,31 43,45 L31,45 Z" fill="white"/>
+      <!-- B — upper bump inner cutout -->
+      <path d="M31,25 L42,25 Q52,31 42,39 L31,39 Z" fill="#272484"/>
+      <!-- B — lower bump outer (slightly larger) -->
+      <path d="M31,49 L45,49 Q63,63 45,77 L31,77 Z" fill="white"/>
+      <!-- B — lower bump inner cutout -->
+      <path d="M31,56 L44,56 Q55,63 44,70 L31,70 Z" fill="#272484"/>
+      <!-- B — mid divider fill -->
+      <rect x="31" y="44" width="15" height="6" fill="white"/>
+      <!-- B — bottom base cap -->
+      <rect x="31" y="77" width="14" height="5" fill="white"/>
+      <!-- I — vertical bar -->
+      <rect x="53" y="18" width="10" height="64" fill="white"/>
+      <!-- I — top serif -->
+      <rect x="36" y="18" width="33" height="7" fill="white"/>
+      <!-- I — bottom serif -->
+      <rect x="36" y="75" width="33" height="7" fill="white"/>
     </svg>
     <div style="border-left:1px solid rgba(255,255,255,0.3);padding-left:18px">
       <h1>Dashboard Early Warning System Komunikasi Kebijakan Bank Indonesia</h1>
@@ -285,7 +298,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   </div>
 
   <!-- IIRS SUMMARY + GAUGE INTEGRATED -->
-  <div class="section-title">Skor IIRS &amp; Posisi Tier — Ringkasan Eksekutif</div>
+  <div class="section-title">Skor IIRS &amp; Posisi Tier</div>
   <!-- Dataset stats bar -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--muted)">
     <span style="background:#F0F4F8;border:1px solid var(--border);border-radius:6px;padding:4px 10px"><strong style="color:var(--bi-navy)">41.129</strong> total konten dipantau</span>
@@ -558,6 +571,80 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 ════════════════════════════════════════ -->
 <div id="tab-analisis" class="tab-panel">
 <div class="container">
+
+  <!-- SOURCE SCORE -->
+  <div class="section-title">Source Score per Vendor — Bobot IIRS</div>
+  <div class="g12">
+    <div>
+      <div class="formula-box">
+        <div class="ft">Formula IIRS &amp; Source Score</div>
+        <span class="hi">IIRS</span> = <span style="color:#F1948A">0,40</span> × Score<sub>NoLimit</sub> + <span class="blu">0,60</span> × Score<sub>Sentrix</sub><br><br>
+        <span class="hi">Source Score</span> = 100 × [<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,40</span> × <span class="grn">NS</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">VA</span> +<br>
+        &nbsp;&nbsp;<span style="color:#F1948A">0,30</span> × <span class="grn">ER</span><br>
+        ]<br><br>
+        <span style="color:#AAB7B8">NS</span> = Negative Sentiment Ratio<br>
+        <span style="color:#AAB7B8">VA</span> = Volume Anomaly Ratio<br>
+        <span style="color:#AAB7B8">ER</span> = Exposure &amp; Reach Ratio
+      </div>
+      <div class="card" style="margin-top:10px;padding:14px">
+        <div class="card-title">Bobot Vendor</div>
+        <div style="font-size:11px;margin-bottom:7px">
+          <span class="vtag nl">No Limit Indonesia</span> = Kanal BI (Bobot <strong>40%</strong>)<br>
+          <small style="color:var(--muted)">Sentimen di kanal resmi BI — relatif terkendali</small>
+        </div>
+        <hr class="div">
+        <div style="font-size:11px">
+          <span class="vtag sx">Sentrix Telkomsel</span> = Non-Kanal BI (Bobot <strong>60%</strong>)<br>
+          <small style="color:var(--muted)">Ruang publik eksternal — representasi reputational risk sesungguhnya</small>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hasil Perhitungan Source Score per Vendor (April 2026)</div>
+      <table class="score-table">
+        <thead>
+          <tr><th>Klaster</th><th>Vendor</th><th style="text-align:center">NS</th><th style="text-align:center">VA</th><th style="text-align:center">ER</th><th style="text-align:center">Score</th><th>Visualisasi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏦 Rupiah</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,350</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">49,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:49.1%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,326</td><td style="text-align:center">0,101</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,07</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.1%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">📈 Inflasi</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,160</td><td style="text-align:center">0,000</td><td style="text-align:center">0,250</td>
+            <td style="text-align:center"><span class="score-badge badge-r">13,90</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:13.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,090</td><td style="text-align:center">0,580</td><td style="text-align:center">0,840</td>
+            <td style="text-align:center"><span class="score-badge badge-s">46,20</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:46.2%"></div></div></td>
+          </tr>
+          <tr style="border-top:2px solid var(--border)">
+            <td rowspan="2" style="font-weight:700;vertical-align:middle;border-right:1px solid var(--border)">🏛️ BI-Rate</td>
+            <td><span class="vtag nl">NoLimit</span></td><td style="text-align:center">0,216</td><td style="text-align:center">0,304</td><td style="text-align:center">0,271</td>
+            <td style="text-align:center"><span class="score-badge badge-r">25,89</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar nl" style="width:25.9%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="vtag sx">Sentrix</span></td><td style="text-align:center">0,250</td><td style="text-align:center">0,170</td><td style="text-align:center">1,000</td>
+            <td style="text-align:center"><span class="score-badge badge-s">45,10</span></td>
+            <td><div class="mini-bar-wrap"><div class="mini-bar sx" style="width:45.1%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- NS VA ER CHARTS -->
   <div class="section-title">Dekomposisi Komponen NS · VA · ER per Klaster</div>
