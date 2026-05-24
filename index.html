@@ -8,26 +8,27 @@
 <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
 <style>
 :root {
-  --bi-red:#C41230; --bi-red-dark:#8B0D21; --bi-red-light:#E8374F;
-  --ringan:#27AE60; --sedang:#F39C12; --siaga:#E67E22; --crisis:#C0392B;
-  --bg:#F5F6FA; --card:#FFFFFF; --text:#2C3E50; --muted:#7F8C8D;
-  --border:#E0E6EF; --shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bi-red:#B5122A; --bi-red-dark:#7A0B1C; --bi-red-light:#D42040;
+  --bi-navy:#1A3A5C; --bi-navy-light:#2A527F; --bi-gold:#C4961A;
+  --ringan:#1E7E4A; --sedang:#C07A00; --siaga:#C05500; --crisis:#9B1C1C;
+  --bg:#ECF0F5; --card:#FFFFFF; --text:#1C2B3A; --muted:#4E6077;
+  --border:#C8D4E0; --shadow:0 2px 14px rgba(26,58,92,0.10);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
 
 /* HEADER */
-.header{background:linear-gradient(135deg,var(--bi-red-dark),var(--bi-red) 60%,var(--bi-red-light));color:#fff;padding:18px 36px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(196,18,48,.35)}
+.header{background:linear-gradient(135deg,var(--bi-navy) 0%,#1F2F45 30%,var(--bi-red-dark) 65%,var(--bi-red) 100%);color:#fff;padding:18px 36px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(26,58,92,.45)}
 .header h1{font-size:20px;font-weight:700}
 .header h2{font-size:12px;opacity:.85;margin-top:3px}
 .period-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600}
 .header-sub{font-size:11px;opacity:.7;margin-top:5px;text-align:right}
 
 /* TAB NAV */
-.tab-nav{background:#fff;border-bottom:2px solid var(--border);display:flex;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.tab-nav{background:#fff;border-bottom:2px solid var(--border);display:flex;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(26,58,92,.10)}
 .tab-btn{padding:13px 28px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;letter-spacing:.2px}
-.tab-btn:hover{color:var(--bi-red);background:#fef8f9}
-.tab-btn.active{color:var(--bi-red);border-bottom-color:var(--bi-red);background:#fff}
+.tab-btn:hover{color:var(--bi-navy);background:#EEF3F8}
+.tab-btn.active{color:var(--bi-navy);border-bottom-color:var(--bi-navy);background:#fff}
 
 /* PANELS */
 .tab-panel{display:none}
@@ -35,7 +36,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 
 /* CONTAINER */
 .container{padding:22px 32px;max-width:1400px;margin:0 auto}
-.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--bi-red);border-left:3px solid var(--bi-red);padding-left:10px;margin-bottom:14px;margin-top:26px}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--bi-navy);border-left:4px solid var(--bi-navy);padding-left:10px;margin-bottom:14px;margin-top:26px}
 
 /* GRIDS */
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -196,8 +197,40 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
 .narasi-toggle{font-size:10px;color:var(--bi-red);cursor:pointer;margin-top:4px;font-weight:600;display:inline-block}
 .narasi-toggle:hover{text-decoration:underline}
 
+/* AI KONSULTASI BUTTON */
+.ai-fab{position:fixed;bottom:28px;right:28px;z-index:999;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--bi-navy),var(--bi-navy-light));color:#fff;border:none;border-radius:28px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(26,58,92,.40);transition:.2s;letter-spacing:.2px}
+.ai-fab:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(26,58,92,.55)}
+.ai-fab .ai-pulse{width:8px;height:8px;border-radius:50%;background:#4ADE80;animation:pulse 1.5s infinite;flex-shrink:0}
+
+/* AI MODAL */
+.ai-overlay{display:none;position:fixed;inset:0;background:rgba(26,58,92,.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ai-overlay.open{display:flex}
+.ai-modal{background:#fff;border-radius:16px;width:min(700px,96vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(26,58,92,.3)}
+.ai-modal-head{background:linear-gradient(135deg,var(--bi-navy),var(--bi-navy-light));color:#fff;padding:18px 22px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
+.ai-modal-head h3{font-size:15px;font-weight:700;margin:0}
+.ai-modal-head .ai-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.ai-modal-head .ai-close:hover{background:rgba(255,255,255,.35)}
+.ai-modal-body{padding:20px 22px}
+.ai-ctx-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+.ai-ctx-box{background:#F0F4F8;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;line-height:1.7;color:var(--text);font-family:'Courier New',monospace;white-space:pre-wrap;max-height:220px;overflow-y:auto;user-select:all}
+.ai-copy-btn{display:flex;align-items:center;gap:6px;background:var(--bi-navy);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;margin-top:10px;transition:.15s}
+.ai-copy-btn:hover{background:var(--bi-navy-light)}
+.ai-copy-btn.copied{background:#1E7E4A}
+.ai-divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.ai-tools-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
+.ai-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ai-tool-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;text-decoration:none;border:2px solid;font-size:12px;font-weight:600;transition:.15s;cursor:pointer}
+.ai-tool-btn.claude{border-color:#CC6B3E;background:#FDF8F4;color:#8B3A12}
+.ai-tool-btn.claude:hover{background:#F5E6D8;border-color:#8B3A12}
+.ai-tool-btn.chatgpt{border-color:#10A37F;background:#F0FDF9;color:#065F46}
+.ai-tool-btn.chatgpt:hover{background:#CCFBEF;border-color:#065F46}
+.ai-tool-icon{font-size:22px;line-height:1}
+.ai-tool-info{display:flex;flex-direction:column}
+.ai-tool-name{font-size:13px;font-weight:700}
+.ai-tool-sub{font-size:10px;font-weight:400;opacity:.7;margin-top:1px}
+
 /* FOOTER */
-.footer{background:#2C3E50;color:rgba(255,255,255,.55);text-align:center;padding:14px;font-size:10px;margin-top:32px}
+.footer{background:#1A3A5C;color:rgba(255,255,255,.55);text-align:center;padding:14px;font-size:10px;margin-top:32px}
 
 @media(max-width:900px){.g3,.g4,.gauge-row{grid-template-columns:1fr}.g2,.g12{grid-template-columns:1fr}.container{padding:14px}}
 </style>
@@ -601,18 +634,6 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
     </div>
   </div>
 
-  <!-- RADAR + IIRS COMPARISON -->
-  <div class="section-title">Radar Profil Risiko &amp; Perbandingan IIRS</div>
-  <div class="g2">
-    <div class="card">
-      <div class="card-title">Profil Multidimensi per Klaster (NS · VA · ER · Score · IIRS)</div>
-      <canvas id="chartRadar" height="280"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title">Perbandingan Score NoLimit vs Sentrix vs IIRS Final</div>
-      <canvas id="chartIIRS" height="280"></canvas>
-    </div>
-  </div>
 
 </div>
 </div><!-- /tab-analisis -->
@@ -854,97 +875,57 @@ function initAnalisisCharts() {
     }
   });
 
-  new Chart(document.getElementById('chartRadar'), {
-    type: 'radar',
-    data: {
-      labels: ['NS (×100)','VA (×100)','ER (×100)','Score NoLimit','Score Sentrix','IIRS'],
-      datasets: [
-        { label:'Rupiah',  data:[33.8,13.6,100,49.10,46.07,47.28], backgroundColor:'rgba(230,126,34,.15)', borderColor:'#E67E22', pointBackgroundColor:'#E67E22', borderWidth:2, pointRadius:4 },
-        { label:'Inflasi', data:[12.5,29.0,54.5,13.90,46.20,33.26], backgroundColor:'rgba(39,174,96,.15)',  borderColor:'#27AE60', pointBackgroundColor:'#27AE60', borderWidth:2, pointRadius:4 },
-        { label:'BI-Rate', data:[23.3,23.7,63.6,25.89,45.10,37.42], backgroundColor:'rgba(231,76,60,.15)',  borderColor:'#E74C3C', pointBackgroundColor:'#E74C3C', borderWidth:2, pointRadius:4 },
-      ]
-    },
-    options: {
-      responsive:true,
-      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:10 } } },
-      scales:{ r:{ min:0, max:110, grid:{ color:'#E0E6EF' }, pointLabels:{ font:{ size:10 }, color:'#555' }, ticks:{ display:false } } }
-    }
-  });
-
-  new Chart(document.getElementById('chartIIRS'), {
-    type: 'bar',
-    data: {
-      labels: ['Rupiah','Inflasi','BI-Rate'],
-      datasets: [
-        { label:'Score NoLimit (40%)', data:[49.10,13.90,25.89], backgroundColor:'rgba(196,18,48,.7)', borderColor:'#C41230', borderWidth:1 },
-        { label:'Score Sentrix (60%)', data:[46.07,46.20,45.10], backgroundColor:'rgba(52,152,219,.7)', borderColor:'#3498DB', borderWidth:1 },
-        { label:'IIRS Final', data:[47.28,33.26,37.42], backgroundColor:'rgba(44,62,80,.85)', borderColor:'#2C3E50', borderWidth:2, type:'line', borderDash:[5,4], pointRadius:6, pointBackgroundColor:'#2C3E50', tension:.3 },
-      ]
-    },
-    options: {
-      responsive:true,
-      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:10 } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.raw.toFixed(2) } } },
-      scales:{ x:{ grid:{ display:false } }, y:{ min:0, max:70, grid:{ color:'#F0F0F0' } } }
-    }
-  });
 }
 
 /* ══════════════════════════════════════════════════════
    WORD CLOUD + NARASI NEGATIF DATA & INIT
 ══════════════════════════════════════════════════════ */
 const WC_DATA = {
-  rupiah:  [["pasar",22899],["dolar",20642],["global",18669],["nilai",18452],["tukar",14779],["level",12819],["uang",11957],["tengah",11480],["tekanan",10634],["kebijakan",10624],["mata",9835],["negara",9674],["saham",9576],["pemerintah",9357],["perdagangan",9286],["minyak",8846],["melemah",8704],["iran",8646],["kondisi",8326],["kenaikan",8038],["menjaga",7742],["keuangan",7729],["stabilitas",7584],["pelemahan",7211],["energi",7107],["investor",7076],["bunga",7058],["jakarta",6850],["domestik",6716],["suku",6471],["sektor",6370],["amerika",6050],["menguat",5970],["dunia",5804],["dewan",5600],["rapat",5400],["moneter",5200],["intervensi",5100],["fundamental",4900],["devisa",4700]],
-  inflasi: [["global",5221],["pemerintah",5145],["kenaikan",4312],["energi",3840],["pasar",3754],["kebijakan",3638],["menjaga",3421],["tengah",3368],["tekanan",3199],["masyarakat",3174],["minyak",3144],["pertumbuhan",3020],["negara",2925],["pangan",2912],["daerah",2745],["stabilitas",2739],["kondisi",2354],["nasional",2244],["nilai",2224],["tinggi",2172],["sektor",2152],["daya",2122],["bunga",2056],["dunia",1971],["bahan",1967],["suku",1893],["langkah",1866],["biaya",1838],["utama",1772],["beli",1767],["risiko",1648],["pengendalian",1636],["mendorong",1600],["harga",1500],["pangan",1480],["subsidi",1400],["ekspor",1350],["impor",1300],["moneter",1280],["fiskal",1200]],
+  rupiah:  [["pasar",22899],["dolar",20642],["global",18669],["nilai",18452],["tukar",14779],["level",12819],["uang",11957],["tengah",11480],["tekanan",10634],["kebijakan",10624],["purbaya",9900],["mata",9835],["negara",9674],["saham",9576],["pemerintah",9357],["perdagangan",9286],["minyak",8846],["melemah",8704],["iran",8646],["kondisi",8326],["kenaikan",8038],["menjaga",7742],["keuangan",7729],["stabilitas",7584],["pelemahan",7211],["energi",7107],["investor",7076],["bunga",7058],["jakarta",6850],["domestik",6716],["suku",6471],["sektor",6370],["intervensi",6100],["devisa",5800],["moneter",5200],["fundamental",4900]],
+  inflasi: [["global",5221],["pemerintah",5145],["kenaikan",4312],["energi",3840],["pasar",3754],["kebijakan",3638],["menjaga",3421],["tengah",3368],["tekanan",3199],["masyarakat",3174],["minyak",3144],["pertumbuhan",3020],["negara",2925],["pangan",2912],["daerah",2745],["stabilitas",2739],["kondisi",2354],["nasional",2244],["nilai",2224],["tinggi",2172],["sektor",2152],["daya",2122],["bunga",2056],["dunia",1971],["bahan",1967],["suku",1893],["langkah",1866],["biaya",1838],["utama",1772],["beli",1767],["risiko",1648],["pengendalian",1636],["mendorong",1600],["harga",1500],["subsidi",1400],["ekspor",1350],["impor",1300],["moneter",1280],["fiskal",1200]],
   birate:  [["bunga",75],["suku",73],["stabilitas",51],["menjaga",48],["gubernur",45],["tengah",44],["mempertahankan",41],["level",41],["global",40],["keputusan",36],["kebijakan",36],["rapat",30],["dewan",30],["langkah",30],["memutuskan",28],["nilai",28],["tukar",28],["acuan",27],["moneter",26],["pasar",25],["perry",21],["tekanan",19],["warjiyo",18],["kondisi",18],["kembali",18],["akibat",15],["persen",14],["inflasi",13],["rupiah",12],["eksternal",12],["likuiditas",11],["transmisi",10],["tertahan",9],["ruang",9],["penurunan",8],["sinyal",8],["terbatas",8],["geopolitik",8],["stimulus",7],["evaluasi",7]]
 };
 
 const NEG_DATA = {
   rupiah: [
-    "Rupiah Tembus Rp17.000/USD, DPR Desak Pemerintah Jangan Andalkan BI Semata. Pelemahan nilai tukar rupiah yang menembus level Rp17.000 per dolar AS mendapat sorotan tajam dari kalangan legislatif. Anggota Komisi XI DPR RI menilai kondisi tersebut tidak boleh dianggap sebagai fluktuasi biasa, melainkan sinyal bahaya bagi perekonomian nasional.",
-    "Nilai Rupiah Tembus Rekor Terlemah Sepanjang Sejarah. Nilai tukar rupiah menembus rekor terlemah sepanjang sejarah pada Selasa kemarin dengan nilai 17.105 rupiah per dolar Amerika. Mata uang garuda melemah 70 poin atau 0,41 persen. Nilai tersebut bahkan lebih lemah dibandingkan saat krisis moneter 1998 silam.",
-    "Rupiah tembus Rp17 ribuan per dolar bikin banyak orang panik… tapi Bank Indonesia bilang rupiah justru lagi undervalued. Katanya fundamental ekonomi Indonesia masih kuat. Tapi di sisi lain… masyarakat tetap ngerasain harga kebutuhan yang makin bikin dompet ngos-ngosan.",
-    "Pagi ini Rupiah menyentuh level psikologis baru di Rp17.300/US$. Namun, fluktuasi ini adalah dinamika pasar yang wajar di tengah panasnya situasi di Selat Hormuz. Bank Indonesia terus melakukan intervensi pasar secara terukur, namun tekanan eksternal masih kuat.",
-    "Indonesia Rupiah Ambruk ke Level 17.300 per Dolar AS era Prabowo. Rupiah kembali tertekan akibat kombinasi sentimen global negatif, penguatan dolar AS, dan ketidakpastian geopolitik di Timur Tengah.",
-    "Saham PT Bank Central Asia Tbk (BBCA) melemah lebih dari 1% ke Rp5.975 pada sesi pagi, dipicu tekanan jual besar dengan net sell Rp134 miliar. Asing mencatat net sell Rp2,1 triliun akibat pelemahan rupiah yang terus berlanjut.",
-    "Bank Indonesia (BI) menilai nilai tukar rupiah saat ini berada di bawah nilai fundamentalnya atau undervalued. Berdasarkan data BI, nilai tukar rupiah berada di level Rp17.140 per dollar AS pada 21 April 2026.",
-    "Tekanan dari luar terus menekan rupiah ke level-level psikologis baru. BI melakukan intervensi, namun dolar AS yang menguat akibat kebijakan tarif Trump membuat upaya stabilisasi makin berat."
+    { klaster:'🏦 Rupiah', text:"Nilai Rupiah Tembus Rekor Terlemah Sepanjang Sejarah. Nilai tukar rupiah menembus rekor terlemah sepanjang sejarah dengan level 17.105 rupiah per dolar Amerika — bahkan lebih lemah dibandingkan saat krisis moneter 1998. Mata uang garuda melemah 70 poin dalam sehari di tengah derasnya tekanan eksternal." },
+    { klaster:'🏦 Rupiah', text:"Indonesia Rupiah Ambruk ke Level Rp17.300 per Dolar AS. Rupiah kembali tertekan akibat kombinasi sentimen global negatif, penguatan dolar AS, dan ketidakpastian geopolitik di Timur Tengah. Publik mempertanyakan ketahanan fundamental ekonomi Indonesia dalam menahan tekanan eksternal yang terus meningkat." },
+    { klaster:'🏦 Rupiah', text:"DPR Desak Pemerintah Jangan Andalkan BI Semata. Pelemahan nilai tukar rupiah menembus Rp17.000 per dolar AS mendapat sorotan tajam kalangan legislatif. Anggota Komisi XI DPR RI menyatakan kondisi ini bukan fluktuasi biasa, melainkan sinyal bahaya bagi perekonomian nasional yang membutuhkan respons terpadu." },
+    { klaster:'🏦 Rupiah', text:"Menteri Keuangan Purbaya menyebut saldo negara di Bank Indonesia tersisa Rp120 T, padahal awalnya mencapai Rp420 T karena Rp300 T dipindahkan. Pernyataan ini memicu kekhawatiran publik soal ketahanan fiskal dan cadangan devisa di tengah tekanan kurs yang terus berlanjut." },
+    { klaster:'🏦 Rupiah', text:"Rupiah tembus Rp17 ribuan per dolar bikin banyak orang panik. Meski BI menyebut rupiah undervalued, masyarakat tetap ngerasain harga kebutuhan yang makin mencekik. Narasi 'fundamental kuat' dinilai tidak cukup menjawab keresahan publik yang merasakan dampak langsung di dompet mereka setiap hari." }
   ],
   inflasi: [
-    "Minggu ini rupiah tembus Rp17.092 per dolar. Dampaknya justru paling keras ke yang belanja sehari-hari. Harga impor naik, biaya produksi membengkak, dan inflasi impor (imported inflation) mulai dirasakan masyarakat bawah lebih dulu.",
-    "Nilai tukar Rupiah melemah hingga menyentuh level Rp17.377 per dolar Amerika Serikat, mencetak rekor terendah semenjak masa reformasi. Kondisi geopolitik dan kebijakan tarif global turut memperparah tekanan inflasi dari sisi impor.",
-    "Bank-bank selalu bicara soal 'kebijakan moneter yang hati-hati' setiap kali suku bunga naik. Tapi ada dampak yang jarang dijelaskan: cicilan KPR naik, kredit UMKM makin mahal, daya beli masyarakat tergerus diam-diam.",
-    "🔥 The Fed TAHAN SUKU BUNGA — Tapi Kenapa RUPIAH Justru TERPURUK hingga 17.300? Ketidakpastian kebijakan moneter AS memicu capital outflow dari emerging markets termasuk Indonesia, menekan rupiah dan berpotensi memicu imported inflation.",
-    "Kondisi pasar modal Indonesia selama sepekan (20-24 April 2026) mengalami tekanan signifikan. IHSG terkoreksi tajam dan rupiah melemah — dua tekanan sekaligus yang mempersulit pengendalian inflasi dan ekspektasi pasar.",
-    "Dunia sedang menghadapi situasi ekonomi yang tidak baik-baik saja. Inflasi meningkat, krisis energi terjadi di banyak negara. Asia Tenggara termasuk Indonesia mulai merasakan dampaknya lewat kenaikan harga BBM dan pangan.",
-    "Lonjakan harga minyak dunia mulai membayangi ekonomi Indonesia. Dampaknya, inflasi berpotensi naik dan arah suku bunga bisa berubah. Ekonom menyebut, jika harga minyak bertahan di $100/barel, inflasi Indonesia bisa menembus batas atas target.",
-    "Nilai tukar rupiah kembali melemah ke Rp17.300 per dolar AS. Pelemahan ini berpotensi berdampak pada harga impor, inflasi, hingga daya beli masyarakat yang sudah terbebani kenaikan harga pangan dan energi."
+    { klaster:'📈 Inflasi', text:"Lonjakan harga minyak dunia mulai membayangi ekonomi Indonesia. Dampaknya, inflasi berpotensi naik signifikan dan arah suku bunga bisa berubah drastis. Ekonom menyebut jika harga minyak bertahan di $100/barel, inflasi Indonesia bisa menembus batas atas target BI dan menghapus ruang stimulus moneter." },
+    { klaster:'📈 Inflasi', text:"Dunia sedang menghadapi situasi ekonomi yang tidak baik-baik saja. Inflasi meningkat, krisis energi terjadi di banyak negara, harga BBM mulai naik. Indonesia ikut merasakan dampaknya: harga pangan melonjak, daya beli masyarakat tergerus, dan kebijakan moneter BI makin tersandera kondisi global." },
+    { klaster:'📈 Inflasi', text:"Bank-bank selalu bicara soal 'kebijakan moneter yang hati-hati' setiap kali suku bunga naik. Tapi ada dampak yang jarang dijelaskan kepada publik: cicilan KPR naik, kredit UMKM makin mahal, dan daya beli masyarakat tergerus diam-diam. Komunikasi BI dinilai belum menjangkau kelompok yang paling terdampak." },
+    { klaster:'📈 Inflasi', text:"Imported inflation mulai dirasakan masyarakat bawah paling keras. Dampak pelemahan kurs ke harga impor, biaya produksi yang membengkak, dan lonjakan harga kebutuhan pokok terjadi lebih cepat dari yang diantisipasi. Kebijakan stabilisasi harga pangan dianggap belum memadai untuk meredam kepanikan publik." },
+    { klaster:'📈 Inflasi', text:"Kondisi pasar selama sepekan 20-24 April 2026 mengalami tekanan signifikan. IHSG terkoreksi tajam, rupiah melemah, dan ekspektasi inflasi masyarakat melonjak akibat kenaikan harga BBM non-subsidi. Dua tekanan sekaligus ini mempersulit pengendalian inflasi dan membebani ekspektasi ekonomi jangka pendek." }
   ],
   birate: [
-    "KOMPAS.TV — Kinerja rupiah terus tertekan di atas 17 ribu per dolar AS. Kondisi ini makin mempersempit ruang bagi Bank Indonesia untuk melonggarkan kebijakan moneter, padahal perekonomian dinilai membutuhkan stimulus.",
-    "Bank Indonesia memutuskan menahan BI Rate sambil menunggu evaluasi dari MSCI. Di sisi lain, IHSG justru makin tertekan! Keputusan BI + penilaian MSCI bisa jadi penentu arah pasar ke depan yang kian tidak pasti.",
-    "🚨 RUPIAH NYUNGSEP, DOMPET TERCEKIK! Rupiah mencetak rekor terendah sepanjang masa di level Rp17.190/US$. BI Rate ditahan di 4,75%: BBM Non-Subsidi meroket, harga sembako merangkak naik, cicilan utang valas korporasi membengkak.",
-    "Rapat Dewan Gubernur BI pada 21–22 April 2026 memutuskan mempertahankan suku bunga acuan BI-Rate sebesar 4,75%. Keputusan ini diambil sebagai langkah menjaga stabilitas, namun banyak pelaku usaha berharap BI segera menurunkan suku bunga untuk merangsang pertumbuhan.",
-    "IHSG Melemah 0,41% di Level 7.528 di Tengah Sentimen MSCI dan Kebijakan Moneter BI. Pasar dipengaruhi sentimen global: meredanya tensi Selat Hormuz bersanding dengan ketidakpastian arah Fed Rate dan keputusan BI yang dianggap terlalu konservatif.",
-    "Bank Indonesia memberi sinyal ruang penurunan suku bunga kian terbatas di tengah geopolitik global yang memanas. Gubernur BI Perry Warjiyo menegaskan BI Rate ditahan di 4,75% dengan fokus menjaga stabilitas.",
-    "Gubernur BI Perry Warjiyo memberi sinyal sulit menurunkan BI Rate dari level 4,75% karena fokus pada stabilitas akibat tekanan global — sehingga peluang penurunan suku bunga semakin kecil dan investasi domestik makin tertekan.",
-    "Kebijakan BI menahan suku bunga diapresiasi untuk stabilitas, namun di lapangan pelaku UMKM mengeluh: akses kredit makin ketat, bunga pinjaman belum turun, sementara biaya operasional terus meningkat akibat imported inflation."
+    { klaster:'🏛️ BI-Rate', text:"Gubernur BI Perry Warjiyo memberi sinyal sulit menurunkan BI Rate dari level 4,75% karena kebijakan kini difokuskan pada upaya menjaga stabilitas akibat tekanan global. Peluang penurunan suku bunga semakin kecil, sementara pelaku usaha dan sektor riil membutuhkan stimulus segera untuk menopang pertumbuhan." },
+    { klaster:'🏛️ BI-Rate', text:"Kebijakan BI menahan suku bunga diapresiasi untuk stabilitas, namun di lapangan pelaku UMKM mengeluh keras: akses kredit makin ketat, bunga pinjaman belum turun, sementara biaya operasional terus meningkat. Kesenjangan antara narasi kebijakan makro dan realitas bisnis mikro kian melebar." },
+    { klaster:'🏛️ BI-Rate', text:"Bank Indonesia memutuskan menahan BI Rate sambil menunggu evaluasi dari MSCI. Di sisi lain, IHSG justru makin tertekan. Keputusan BI yang dianggap terlalu konservatif membuat investor mempertanyakan komitmen BI terhadap pertumbuhan — bukan hanya stabilitas nilai tukar semata." },
+    { klaster:'🏛️ BI-Rate', text:"Ruang penurunan BI Rate kian terbatas di tengah geopolitik global yang memanas. Eskalasi konflik mendorong kenaikan yield US Treasury, harga minyak melonjak, sehingga BI sulit bergerak untuk melonggarkan kebijakan moneter meski sektor riil meminta ruang ekspansi kredit yang lebih luas." },
+    { klaster:'🏛️ BI-Rate', text:"Rapat Dewan Gubernur BI April 2026 memutuskan mempertahankan BI-Rate 4,75%. Banyak pelaku usaha berharap BI segera menurunkan suku bunga untuk merangsang pertumbuhan. Narasi 'pro-stability' dari BI dinilai belum cukup meyakinkan publik yang melihat IHSG terus melemah dan investasi asing keluar." }
   ]
 };
 
 // ── Render narasi negatif cards ──
 function renderNarasi(containerId, items, klaster) {
-  const colors = { rupiah:'#C41230', inflasi:'#27AE60', birate:'#2980B9' };
-  const color = colors[klaster] || '#C0392B';
+  const colors = { rupiah:'#9B1C1C', inflasi:'#1E5C34', birate:'#1A3A5C' };
+  const bgs   = { rupiah:'#FDF2F2', inflasi:'#F0FAF4', birate:'#EEF3FA' };
+  const color = colors[klaster] || '#9B1C1C';
+  const bg    = bgs[klaster] || '#FDF2F2';
   const el = document.getElementById(containerId);
   if (!el) return;
-  el.innerHTML = items.map((txt, i) => `
-    <div class="narasi-card" style="border-left-color:${color};border-color:${color}33">
+  el.innerHTML = items.map((item, i) => `
+    <div class="narasi-card" style="border-left-color:${color};border-color:${color}40;background:${bg}">
       <div class="narasi-header">
-        <span class="narasi-num" style="color:${color};background:${color}18">#${i+1}</span>
-        <span class="narasi-badge" style="background:${color}">NEGATIF</span>
+        <span class="narasi-num" style="color:${color};background:${color}18">${item.klaster}</span>
+        <span class="narasi-badge" style="background:${color}">● NEGATIF</span>
       </div>
-      <div class="narasi-text" id="nt-${klaster}-${i}">${txt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-      <span class="narasi-toggle" onclick="toggleNarasi('nt-${klaster}-${i}',this)">▼ Baca selengkapnya</span>
+      <div class="narasi-text" id="nt-${klaster}-${i}">${item.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <span class="narasi-toggle" onclick="toggleNarasi('nt-${klaster}-${i}',this)">▼ Selengkapnya</span>
     </div>`).join('');
 }
 
@@ -987,6 +968,90 @@ setTimeout(() => {
   initWordCloud('wcInflasi', WC_DATA.inflasi, ['#27AE60','#1E8449','#F39C12','#2C3E50','#7F8C8D']);
   initWordCloud('wcBIRate',  WC_DATA.birate,  ['#2980B9','#1A5276','#8E44AD','#2C3E50','#7F8C8D']);
 }, 600);
+
+// ── AI KONSULTASI MODAL ──
+const AI_PROMPT = `Kamu adalah konsultan senior Komunikasi Kebijakan Bank Indonesia.
+
+DATA EWS APRIL 2026:
+─────────────────────────────────────────
+• Rupiah  : IIRS 47,28 → Tier 2 SEDANG (SLA 12 jam) — hanya 2,72 poin dari Siaga (50)
+• Inflasi : IIRS 33,26 → Tier 1 RINGAN (SLA 24 jam)
+• BI-Rate : IIRS 37,42 → Tier 2 SEDANG (SLA 12 jam)
+─────────────────────────────────────────
+SINYAL KRITIS:
+• ER Sentrix Rupiah & BI-Rate = 100% (saturasi jangkauan)
+• VA Sentrix Inflasi = 58% (anomali volume tinggi)
+• Gap NoLimit vs Sentrix Rupiah: 49,10 vs 46,07 (gap 3 poin)
+• Tidak ada klaster di level Siaga atau Crisis
+─────────────────────────────────────────
+PROTOKOL AKTIF:
+• Tier 2 (Rupiah + BI-Rate): Joint issue brief, eskalasi ke Kepala Satker DKom
+• Tier 1 (Inflasi): Monitoring mingguan, konten organik edukatif
+
+Bantu saya brainstorming strategi komunikasi untuk situasi ini. Pertanyaanku:`;
+
+function openAI() {
+  document.getElementById('aiOverlay').classList.add('open');
+  document.getElementById('aiPromptBox').textContent = AI_PROMPT;
+}
+function closeAI() {
+  document.getElementById('aiOverlay').classList.remove('open');
+}
+function copyPrompt() {
+  navigator.clipboard.writeText(AI_PROMPT).then(() => {
+    const btn = document.getElementById('aiCopyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '✅ Tersalin!';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 Salin Konteks EWS'; }, 2000);
+  });
+}
+document.getElementById('aiOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAI();
+});
 </script>
+
+<!-- FLOATING AI BUTTON -->
+<button class="ai-fab" onclick="openAI()">
+  <span class="ai-pulse"></span>
+  🤖 Konsultasi AI
+</button>
+
+<!-- AI MODAL -->
+<div id="aiOverlay" class="ai-overlay">
+  <div class="ai-modal">
+    <div class="ai-modal-head">
+      <h3>🤖 Konsultasi AI — Brainstorming Strategi Komunikasi BI</h3>
+      <button class="ai-close" onclick="closeAI()">✕</button>
+    </div>
+    <div class="ai-modal-body">
+      <div class="ai-ctx-label">📋 Konteks EWS April 2026 — Salin & tempel ke AI pilihanmu</div>
+      <div class="ai-ctx-box" id="aiPromptBox"></div>
+      <button class="ai-copy-btn" id="aiCopyBtn" onclick="copyPrompt()">📋 Salin Konteks EWS</button>
+
+      <hr class="ai-divider">
+      <div class="ai-tools-label">🚀 Buka AI di tab baru — lalu tempel konteks di atas</div>
+      <div class="ai-tools">
+        <a href="https://claude.ai/new" target="_blank" class="ai-tool-btn claude">
+          <span class="ai-tool-icon">🟠</span>
+          <span class="ai-tool-info">
+            <span class="ai-tool-name">Claude (Anthropic)</span>
+            <span class="ai-tool-sub">Analisis kontekstual mendalam</span>
+          </span>
+        </a>
+        <a href="https://chat.openai.com/" target="_blank" class="ai-tool-btn chatgpt">
+          <span class="ai-tool-icon">🟢</span>
+          <span class="ai-tool-info">
+            <span class="ai-tool-name">ChatGPT (OpenAI)</span>
+            <span class="ai-tool-sub">Brainstorming & saran narasi</span>
+          </span>
+        </a>
+      </div>
+      <p style="font-size:10px;color:var(--muted);margin-top:12px;line-height:1.6">
+        💡 <strong>Cara pakai:</strong> Klik "Salin Konteks EWS" → Klik salah satu AI di atas → Tempel konteks → Lanjutkan dengan pertanyaanmu tentang strategi komunikasi, narasi counter, atau skenario eskalasi.
+      </p>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
