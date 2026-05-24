@@ -96,25 +96,51 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 
 /* ACTIVE PROTOCOL */
 .active-proto{border-radius:12px;padding:18px;border:2px solid}
-.active-proto.tier2{border-color:#F39C12;background:#FFFBF0}
 .active-proto.tier1{border-color:#27AE60;background:#F0FBF4}
+.active-proto.tier2{border-color:#F39C12;background:#FFFBF0}
+/* ── CRISIS / TIER 3 ─────────────────────────────────────── */
+.active-proto.tier3{
+  border-color:#C0392B;border-width:2px;
+  background:linear-gradient(135deg,#FDF1F0 0%,#FDECEA 100%);
+  box-shadow:0 0 0 4px rgba(192,57,43,.10), 0 4px 20px rgba(192,57,43,.18);
+  animation:crisis-border-pulse 2s ease-in-out infinite;
+}
+@keyframes crisis-border-pulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(192,57,43,.10),0 4px 20px rgba(192,57,43,.18)}
+  50%    {box-shadow:0 0 0 6px rgba(192,57,43,.22),0 4px 24px rgba(192,57,43,.30)}
+}
+.active-proto.tier3 .proto-detail{color:#5D1A16}
+.active-proto.tier3 .proto-detail strong{color:#922B21}
+/* ── header row ─── */
 .proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .proto-name{font-size:14px;font-weight:700}
-.proto-name.t2{color:#C87F0A}.proto-name.t1{color:#1E8449}
+.proto-name.t1{color:#1E8449}
+.proto-name.t2{color:#C87F0A}
+.proto-name.t3{color:#922B21}
+/* ── range badge ─── */
 .proto-range{font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;color:#fff}
-.proto-range.t2{background:#F39C12}.proto-range.t1{background:#27AE60}
+.proto-range.t1{background:#27AE60}
+.proto-range.t2{background:#F39C12}
+.proto-range.t3{background:linear-gradient(90deg,#922B21,#C0392B)}
+/* ── klaster badges ─── */
 .klaster-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .kbadge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
-.kbadge.sedang{background:#FEF6E0;color:#C87F0A;border:1px solid #F39C12}
 .kbadge.ringan{background:#EBF9F1;color:#1E8449;border:1px solid #27AE60}
+.kbadge.sedang{background:#FEF6E0;color:#C87F0A;border:1px solid #F39C12}
+.kbadge.siaga{background:#FEF0EB;color:#C0392B;border:1px solid #E74C3C}
+.kbadge.crisis{background:#FDEEEC;color:#922B21;border:1px solid #C0392B;font-weight:800}
 .kbadge .dpulse{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── protocol rows ─── */
 .proto-row{display:flex;gap:8px;margin-bottom:7px;font-size:11px}
 .proto-icon{flex-shrink:0;font-size:12px;margin-top:1px}
 .proto-detail{color:var(--text);line-height:1.5}
 .proto-detail strong{color:var(--text)}
+/* ── SLA pill ─── */
 .sla-pill{display:inline-block;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;margin-top:8px;color:#fff}
-.sla-pill.t2{background:#F39C12}.sla-pill.t1{background:#27AE60}
+.sla-pill.t1{background:#27AE60}
+.sla-pill.t2{background:#F39C12}
+.sla-pill.t3{background:linear-gradient(90deg,#7B241C,#C0392B);animation:crisis-border-pulse 2s ease-in-out infinite;letter-spacing:.3px}
 
 /* FULL TIER CARDS (TCRP tab) */
 .tier-card{border-radius:12px;padding:18px;border:2px solid;position:relative}
@@ -1437,13 +1463,26 @@ function rnProtoGrid(sc){
   });
   let html='';
   if(byT[3].length||byT[2].length){
-    const items=[...byT[3],...byT[2]], tc=byT[3].length?'tier3':'tier2', cc=byT[3].length?'t3':'t2';
+    const isCrisis=byT[3].length>0;
+    const items=[...byT[3],...byT[2]], tc=isCrisis?'tier3':'tier2', cc=isCrisis?'t3':'t2';
+    const icon=isCrisis?'🚨':'⚠️';
+    const titleLabel=isCrisis?'Tier 3 — Crisis':'Tier 2 — Sedang';
+    const iirRange=isCrisis?'IIRS ≥ 60':'IIRS 36 – 59';
+    const slaHours=isCrisis?'3':'12';
+    const crisisWarning=isCrisis?`
+      <div style="background:rgba(192,57,43,.12);border-left:4px solid #C0392B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#7B241C;font-weight:600">
+        🔴 SITUASI KRISIS — Semua klaster yang melampaui IIRS ≥ 60 memerlukan respons darurat segera. Aktivasi Satuan Tugas Komunikasi Krisis.
+      </div>`:'' ;
     html+=`<div class="active-proto ${tc}">
-      <div class="proto-header"><div class="proto-name ${cc}">⚠️ ${byT[3].length?'Tier 3 — Crisis':'Tier 2 — Sedang'} &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div><div class="proto-range ${cc}">IIRS ${byT[3].length?'≥60':'36–59'}</div></div>
+      <div class="proto-header">
+        <div class="proto-name ${cc}">${icon} ${titleLabel} &nbsp;<small style="font-weight:400;font-size:11px">Diaktifkan</small></div>
+        <div class="proto-range ${cc}">${iirRange}</div>
+      </div>
+      ${crisisWarning}
       <div class="klaster-badges">${items.map(({k,s,m})=>`<span class="kbadge ${s.tier.cls}"><span class="dpulse"></span>${m.emoji} ${k} — ${fmt(s.iirs)}</span>`).join('')}</div>
-      <div class="proto-row"><div class="proto-icon">📋</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke Kepala Grup &amp; Kepala Satker DKom, disuarakan dalam RDGM.</div></div>
-      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pesan &amp; Kanal:</strong> Klarifikasi reaktif + edukasi tematik intensif. Paid promotion diperbesar, influencer/kreator diaktifkan.</div></div>
-      <div class="sla-pill ${cc}">⏱ SLA: Maks. ${byT[3].length?'6':'12'} jam sejak IIRS menembus threshold</div>
+      <div class="proto-row"><div class="proto-icon">${isCrisis?'🚨':'📋'}</div><div class="proto-detail"><strong>Eskalasi:</strong> DP2K &amp; DLIPKD susun <em>joint issue brief</em> Non-Kanal BI &amp; Kanal BI, eskalasi ke Kepala Grup &amp; Kepala Satker DKom${isCrisis?', <strong>lapor langsung ke Gubernur BI &amp; Deputi</strong>':''}, disuarakan dalam RDGM.</div></div>
+      <div class="proto-row"><div class="proto-icon">📢</div><div class="proto-detail"><strong>Pesan &amp; Kanal:</strong> ${isCrisis?'Respons krisis segera — siaran pers resmi, konferensi pers, pernyataan Gubernur BI. Semua kanal diaktifkan maksimal.':'Klarifikasi reaktif + edukasi tematik intensif. Paid promotion diperbesar, influencer/kreator diaktifkan.'}</div></div>
+      <div class="sla-pill ${cc}">⏱ SLA: Maks. ${slaHours} jam sejak IIRS menembus threshold</div>
     </div>`;
   }
   if(byT[1].length){
