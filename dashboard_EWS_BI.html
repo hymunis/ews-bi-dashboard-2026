@@ -52,8 +52,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 /* IIRS SUMMARY CARDS */
 .iirs-card{border-radius:12px;padding:20px;color:#fff;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.15)}
 .iirs-card::after{content:'';position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.1)}
+.iirs-card.ringan{background:linear-gradient(135deg,#1A9850,#27AE60)}
 .iirs-card.sedang{background:linear-gradient(135deg,#E67E22,#F39C12)}
-.iirs-card.ringan{background:linear-gradient(135deg,#27AE60,#2ECC71)}
+.iirs-card.siaga{background:linear-gradient(135deg,#C0392B,#E74C3C)}
+.iirs-card.crisis{background:linear-gradient(135deg,#4A0E0E,#922B21);box-shadow:0 4px 24px rgba(192,57,43,.55)}
+.iirs-card.crisis .tier-badge{background:rgba(255,80,60,.35);border-color:rgba(255,150,140,.5)}
+.iirs-card.crisis::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 16px);border-radius:12px;pointer-events:none}
 .iirs-card .isu-label{font-size:11px;font-weight:600;text-transform:uppercase;opacity:.85;letter-spacing:.5px}
 .iirs-card .score{font-size:46px;font-weight:800;line-height:1;margin:5px 0 4px}
 .iirs-card .tier-badge{display:inline-block;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:3px 10px;font-size:10px;font-weight:700}
@@ -868,88 +872,117 @@ function switchTab(id) {
 }
 
 // ── SPEEDOMETER GAUGE ──
-function drawGauge(canvasId, value, tierLabel, tierColor) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+function drawGauge(canvasId, value) {
+  const canvas = document.getElementById(canvasId); if (!canvas) return;
+  const ctx   = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
-  const cx = W / 2, cy = H - 18;
-  const R = Math.min(cx, cy) - 6;
-  const tw = 13;
-  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H - 12;
+  const R  = Math.min(cx, cy+2) - 4;
+  const tw = 15;
+  ctx.clearRect(0,0,W,H);
 
-  // angle: value 0 → π (left), value 100 → 2π (right), going clockwise through top
-  const ang = v => Math.PI + (v / 100) * Math.PI;
-
-  // Zone arcs
+  const ang = v => Math.PI + (v/100)*Math.PI;
   const zones = [[0,35,'#27AE60'],[35,50,'#F39C12'],[50,60,'#E67E22'],[60,100,'#C0392B']];
-  zones.forEach(([f, t, c]) => {
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, ang(f), ang(t), false);
-    ctx.lineWidth = tw; ctx.strokeStyle = c; ctx.lineCap = 'butt'; ctx.stroke();
+  const tierCol = value<36?'#1A8A43':value<50?'#B7770D':value<60?'#B54300':'#9B1C1C';
+
+  /* ── 1. Arc drop-shadow ─────────────────────────── */
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.30)'; ctx.shadowBlur=8; ctx.shadowOffsetY=4;
+  zones.forEach(([f,t,c])=>{
+    ctx.beginPath(); ctx.arc(cx,cy,R,ang(f),ang(t));
+    ctx.lineWidth=tw+3; ctx.strokeStyle=c; ctx.lineCap='butt'; ctx.stroke();
+  });
+  ctx.restore();
+
+  /* ── 2. Main coloured arc ───────────────────────── */
+  zones.forEach(([f,t,c])=>{
+    ctx.beginPath(); ctx.arc(cx,cy,R,ang(f),ang(t));
+    ctx.lineWidth=tw; ctx.strokeStyle=c; ctx.lineCap='butt'; ctx.stroke();
   });
 
-  // Inner fill
-  ctx.beginPath();
-  ctx.arc(cx, cy, R - tw - 1, Math.PI, 2 * Math.PI, false);
-  ctx.closePath();
-  ctx.fillStyle = '#F8F9FB'; ctx.fill();
-
-  // Boundary ticks at 35, 50, 60
-  [35,50,60].forEach(v => {
-    const a = ang(v);
-    const r1 = R - tw, r2 = R + 3;
-    ctx.beginPath();
-    ctx.moveTo(cx + r1*Math.cos(a), cy + r1*Math.sin(a));
-    ctx.lineTo(cx + r2*Math.cos(a), cy + r2*Math.sin(a));
-    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+  /* ── 3. Glossy sheen overlay (top-lit) ─────────── */
+  const shine = ctx.createLinearGradient(cx, cy-R-tw, cx, cy+4);
+  shine.addColorStop(0,'rgba(255,255,255,0.46)');
+  shine.addColorStop(0.38,'rgba(255,255,255,0.12)');
+  shine.addColorStop(1,'rgba(255,255,255,0)');
+  zones.forEach(([f,t])=>{
+    ctx.beginPath(); ctx.arc(cx,cy,R,ang(f),ang(t));
+    ctx.lineWidth=tw; ctx.strokeStyle=shine; ctx.stroke();
   });
 
-  // Small ticks every 10 units
-  for (let v = 0; v <= 100; v += 10) {
-    if ([35,50,60].includes(v)) continue;
-    const a = ang(v);
-    const r1 = R - tw + 2, r2 = R - 2;
+  /* ── 4. Inner concave background (depth gradient) ─ */
+  const bg = ctx.createRadialGradient(cx, cy-6, 2, cx, cy, R-tw);
+  bg.addColorStop(0,'#F2F6FA'); bg.addColorStop(1,'#C8D4E0');
+  ctx.beginPath(); ctx.arc(cx,cy,R-tw-1,Math.PI,2*Math.PI); ctx.closePath();
+  ctx.fillStyle=bg; ctx.fill();
+
+  const inSh = ctx.createRadialGradient(cx,cy,R-tw-16,cx,cy,R-tw-1);
+  inSh.addColorStop(0,'rgba(0,0,0,0)'); inSh.addColorStop(1,'rgba(0,0,0,0.11)');
+  ctx.beginPath(); ctx.arc(cx,cy,R-tw-1,Math.PI,2*Math.PI); ctx.closePath();
+  ctx.fillStyle=inSh; ctx.fill();
+
+  /* ── 5. Zone divider ticks ──────────────────────── */
+  [35,50,60].forEach(v=>{
+    const a=ang(v);
     ctx.beginPath();
-    ctx.moveTo(cx + r1*Math.cos(a), cy + r1*Math.sin(a));
-    ctx.lineTo(cx + r2*Math.cos(a), cy + r2*Math.sin(a));
-    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.stroke();
+    ctx.moveTo(cx+(R-tw-2)*Math.cos(a), cy+(R-tw-2)*Math.sin(a));
+    ctx.lineTo(cx+(R+4)*Math.cos(a),    cy+(R+4)*Math.sin(a));
+    ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.92)'; ctx.stroke();
+  });
+
+  /* ── 6. Small scale ticks ───────────────────────── */
+  for(let v=0;v<=100;v+=10){
+    if([35,50,60].includes(v)) continue;
+    const a=ang(v);
+    ctx.beginPath();
+    ctx.moveTo(cx+(R-tw+3)*Math.cos(a), cy+(R-tw+3)*Math.sin(a));
+    ctx.lineTo(cx+(R-3)*Math.cos(a),    cy+(R-3)*Math.sin(a));
+    ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.stroke();
   }
 
-  // Value text (inside arc)
-  ctx.textAlign = 'center';
-  ctx.font = `bold 18px 'Segoe UI', Arial`;
-  ctx.fillStyle = tierColor;
-  ctx.fillText(value.toFixed(2).replace('.', ','), cx, cy - R + tw + 28);
-
-  // Tier label
-  ctx.font = `bold 8px 'Segoe UI', Arial`;
-  ctx.fillStyle = '#7F8C8D';
-  ctx.fillText(tierLabel, cx, cy - R + tw + 40);
-
-  // Needle
-  const na = ang(value);
+  /* ── 7. Needle (with shadow + highlight) ────────── */
+  const na   = ang(Math.min(Math.max(value,0),100));
   const nLen = R - tw - 5;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.50)'; ctx.shadowBlur=6;
+  ctx.shadowOffsetX=2; ctx.shadowOffsetY=2;
   ctx.beginPath();
-  ctx.moveTo(cx - 5 * Math.cos(na), cy - 5 * Math.sin(na));
-  ctx.lineTo(cx + nLen * Math.cos(na), cy + nLen * Math.sin(na));
-  ctx.lineWidth = 2.5; ctx.strokeStyle = '#1A252F'; ctx.lineCap = 'round'; ctx.stroke();
+  ctx.moveTo(cx-5*Math.cos(na), cy-5*Math.sin(na));
+  ctx.lineTo(cx+nLen*Math.cos(na), cy+nLen*Math.sin(na));
+  ctx.lineWidth=3; ctx.strokeStyle='#1A252F'; ctx.lineCap='round'; ctx.stroke();
+  ctx.restore();
+  // highlight stripe
+  ctx.beginPath();
+  ctx.moveTo(cx-3*Math.cos(na), cy-3*Math.sin(na));
+  ctx.lineTo(cx+(nLen-12)*Math.cos(na), cy+(nLen-12)*Math.sin(na));
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.40)'; ctx.lineCap='round'; ctx.stroke();
 
-  // Center dot
-  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, 2*Math.PI);
-  ctx.fillStyle = '#1A252F'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI);
-  ctx.fillStyle = '#fff'; ctx.fill();
+  /* ── 8. 3-D metallic center cap ─────────────────── */
+  const capG = ctx.createRadialGradient(cx-2.5,cy-2.5,0.5,cx,cy,9);
+  capG.addColorStop(0,'#A8B8C4'); capG.addColorStop(0.45,'#2C3E50'); capG.addColorStop(1,'#151F28');
+  ctx.beginPath(); ctx.arc(cx,cy,9,0,2*Math.PI); ctx.fillStyle=capG; ctx.fill();
 
-  // Min/Max labels
-  ctx.font = `7px 'Segoe UI', Arial`; ctx.fillStyle = '#AAB7B8';
-  ctx.textAlign = 'left'; ctx.fillText('0', 3, cy + 13);
-  ctx.textAlign = 'right'; ctx.fillText('100', W - 3, cy + 13);
+  const capH = ctx.createRadialGradient(cx-1.5,cy-1.5,0,cx,cy,4);
+  capH.addColorStop(0,'#FFFFFF'); capH.addColorStop(1,'#C0CBD3');
+  ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI); ctx.fillStyle=capH; ctx.fill();
+
+  /* ── 9. Value text ──────────────────────────────── */
+  ctx.textAlign='center';
+  ctx.font=`bold 15px 'Segoe UI',Arial`;
+  ctx.fillStyle=tierCol;
+  ctx.shadowColor='rgba(255,255,255,0.7)'; ctx.shadowBlur=3;
+  ctx.fillText(value.toFixed(2).replace('.',','), cx, cy-6);
+  ctx.shadowBlur=0;
+
+  /* ── 10. Range labels ───────────────────────────── */
+  ctx.font=`6px 'Segoe UI',Arial`; ctx.fillStyle='#8E9EAB';
+  ctx.textAlign='left';  ctx.fillText('0',   2,      cy+13);
+  ctx.textAlign='right'; ctx.fillText('100', W-2,   cy+13);
 }
 
-drawGauge('gaugeRupiah', 47.28, 'SEDANG', '#E67E22');
-drawGauge('gaugeInflasi', 33.26, 'RINGAN', '#27AE60');
-drawGauge('gaugeBIRate', 37.42, 'SEDANG', '#E67E22');
+drawGauge('gaugeRupiah',  47.28);
+drawGauge('gaugeInflasi', 33.26);
+drawGauge('gaugeBIRate',  37.42);
 
 // ── ANALISIS CHARTS (lazy init) ──
 Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
