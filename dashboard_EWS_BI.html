@@ -8,6 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <title>Dashboard EWS Komunikasi BI — April 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -1023,15 +1024,31 @@ function initAnalisisCharts() {
   if (analisisChartsDone) return;
   analisisChartsDone = true;
 
+  // Register datalabels plugin globally then selectively enable per chart
+  Chart.register(ChartDataLabels);
+
   const compOpts = (title) => ({
     responsive: true,
     plugins: {
       legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } },
-      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw*100).toFixed(1) + '%' } }
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw*100).toFixed(1) + '%' } },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        offset: -1,
+        formatter: v => v > 0.005 ? (v*100).toFixed(1)+'%' : '',
+        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0.005,
+        font: { size: 9, weight: '700', family: "'Segoe UI',Arial" },
+        color: ctx => {
+          const colors = ['#922B21','#B7770D','#1A5276'];
+          return colors[ctx.datasetIndex] || '#2C3E50';
+        },
+        clamp: true,
+      }
     },
     scales: {
       x: { grid: { display: false } },
-      y: { min: 0, max: 1.1, ticks: { callback: v => Math.round(v*100) + '%' }, grid: { color: '#F0F0F0' } }
+      y: { min: 0, max: 1.18, ticks: { callback: v => Math.round(v*100) + '%' }, grid: { color: '#F0F0F0' } }
     }
   });
 
@@ -1073,7 +1090,17 @@ function initAnalisisCharts() {
     },
     options: {
       responsive: true,
-      plugins: { legend: { position:'bottom', labels:{ boxWidth:10, padding:10 } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.raw.toFixed(1)+'%' } } },
+      plugins: {
+        legend: { position:'bottom', labels:{ boxWidth:10, padding:10 } },
+        tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.raw.toFixed(1)+'%' } },
+        datalabels: {
+          anchor: 'center', align: 'center',
+          formatter: v => v >= 7 ? v.toFixed(1)+'%' : '',
+          display: ctx => ctx.dataset.data[ctx.dataIndex] >= 7,
+          font: { size: 9, weight: '700', family: "'Segoe UI',Arial" },
+          color: '#fff',
+        }
+      },
       scales: {
         x: { stacked:true, grid:{ display:false } },
         y: { stacked:true, min:0, max:100, ticks:{ callback: v => v+'%' }, grid:{ color:'#F0F0F0' } }
