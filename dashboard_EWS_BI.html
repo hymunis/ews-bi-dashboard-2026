@@ -1491,42 +1491,202 @@ setTimeout(() => {
 }, 600);
 
 // ── AI KONSULTASI MODAL ──
-const AI_PROMPT = `Kamu adalah konsultan senior Komunikasi Kebijakan Bank Indonesia.
+// Global: menyimpan data live terkini (diisi oleh applyLiveData)
+let _aiSC = null;
+let _aiPeriode = 'April 2026';
 
-DATA EWS APRIL 2026:
-─────────────────────────────────────────
-• Rupiah  : IIRS 47,28 → Tier 2 SEDANG (SLA 12 jam) — hanya 2,72 poin dari Siaga (50)
-• Inflasi : IIRS 33,26 → Tier 1 RINGAN (SLA 24 jam)
-• BI-Rate : IIRS 37,42 → Tier 2 SEDANG (SLA 12 jam)
-─────────────────────────────────────────
-SINYAL KRITIS:
-• ER Sentrix Rupiah & BI-Rate = 100% (saturasi jangkauan)
-• VA Sentrix Inflasi = 58% (anomali volume tinggi)
-• Gap NoLimit vs Sentrix Rupiah: 49,10 vs 46,07 (gap 3 poin)
-• Tidak ada klaster di level Siaga atau Crisis
-─────────────────────────────────────────
-PROTOKOL AKTIF:
-• Tier 2 (Rupiah + BI-Rate): Joint issue brief, eskalasi ke Kepala Satker DKom
-• Tier 1 (Inflasi): Monitoring mingguan, konten organik edukatif
+// Fallback data statis (April 2026)
+const _AI_STATIC = {
+  periode: 'April 2026',
+  sc: {
+    Rupiah:  { iirs:47.28, nl:{ns:0.350,va:0.170,er:1.000,score:49.10}, sx:{ns:0.326,va:0.101,er:1.000,score:46.07}, tier:{cls:'sedang',label:'TIER 2 — SEDANG',sla:'12'} },
+    Inflasi: { iirs:33.26, nl:{ns:0.160,va:0.000,er:0.250,score:13.90}, sx:{ns:0.090,va:0.580,er:0.840,score:46.20}, tier:{cls:'ringan',label:'TIER 1 — RINGAN',sla:'24'} },
+    'BI-Rate':{ iirs:37.42, nl:{ns:0.216,va:0.304,er:0.271,score:25.89}, sx:{ns:0.250,va:0.170,er:1.000,score:45.10}, tier:{cls:'sedang',label:'TIER 2 — SEDANG',sla:'12'} }
+  }
+};
 
-Bantu saya brainstorming strategi komunikasi untuk situasi ini. Pertanyaanku:`;
+function buildAIContext(sc, periode) {
+  const p  = n => String(n.toFixed(2)).replace('.',',');
+  const pp = n => (n*100).toFixed(1) + '%';
+  const PAD = '═══════════════════════════════════════════════════════';
+  const pad = '───────────────────────────────────────────────────────';
+
+  // ── Bagian 1: Data IIRS per klaster
+  const KLASTER_ORDER = ['Rupiah','Inflasi','BI-Rate'];
+  const EMOJI = {Rupiah:'🏦',Inflasi:'📈','BI-Rate':'🏛️'};
+  const tierLabel = {ringan:'Tier 1 RINGAN',sedang:'Tier 2 SEDANG',siaga:'Tier 2 SIAGA',crisis:'Tier 3 CRISIS'};
+  const tierNotes = {
+    ringan:'→ kondisi terkendali, monitoring rutin cukup',
+    sedang:'→ sentimen naik, respons terstruktur diperlukan',
+    siaga: '→ risiko tinggi, eskalasi ke Kepala Satker, SLA dipercepat',
+    crisis:'→ KRISIS, Crisis Management Committee (CMC) diaktifkan'
+  };
+
+  let iirsTxt = '';
+  const signals = [];
+  const protos  = {crisis:[],siaga:[],sedang:[],ringan:[]};
+
+  KLASTER_ORDER.forEach(k => {
+    const s = sc[k]; if(!s) return;
+    const tl = tierLabel[s.tier.cls]  || s.tier.label;
+    const tn = tierNotes[s.tier.cls]  || '';
+    const gap50 = (50 - s.iirs).toFixed(2).replace('.',',');
+    const gap60 = (60 - s.iirs).toFixed(2).replace('.',',');
+    const distNote = s.tier.cls==='sedang' && s.iirs>=45 ? ` — hanya ${gap50} poin dari Siaga`
+                   : s.tier.cls==='siaga'  && s.iirs>=55 ? ` — hanya ${gap60} poin dari Crisis`
+                   : '';
+    iirsTxt += `  ${EMOJI[k]} ${k.padEnd(8)}: IIRS ${p(s.iirs).padStart(5)}  →  ${tl.padEnd(20)} (SLA ${s.tier.sla} jam)${distNote}\n`;
+    iirsTxt += `             NoLimit: NS=${pp(s.nl.ns)} | VA=${pp(s.nl.va)} | ER=${pp(s.nl.er)} → Score ${p(s.nl.score)}\n`;
+    iirsTxt += `             Sentrix: NS=${pp(s.sx.ns)} | VA=${pp(s.sx.va)} | ER=${pp(s.sx.er)} → Score ${p(s.sx.score)}\n\n`;
+
+    // sinyal otomatis
+    if(s.sx.er>=0.99) signals.push(`• ER Sentrix ${k} = 100% → jangkauan eksternal sudah jenuh/saturasi — setiap kenaikan NS akan langsung mendongkrak IIRS tanpa buffer`);
+    if(s.nl.er>=0.99) signals.push(`• ER NoLimit ${k} = 100% → jangkauan kanal resmi BI pun sudah saturasi`);
+    if(s.sx.va>=0.50) signals.push(`• VA Sentrix ${k} = ${pp(s.sx.va)} → anomali volume tinggi, sinyal leading indicator potensi lonjakan`);
+    if(s.nl.va>=0.50) signals.push(`• VA NoLimit ${k} = ${pp(s.nl.va)} → lonjakan volume di kanal resmi BI`);
+    const gap = Math.abs(s.nl.score - s.sx.score);
+    if(gap >= 15) signals.push(`• Gap NoLimit vs Sentrix ${k}: ${p(s.nl.score)} vs ${p(s.sx.score)} (selisih ${gap.toFixed(1)} poin) → persepsi kanal resmi & ruang publik berbeda signifikan`);
+
+    if(protos[s.tier.cls]) protos[s.tier.cls].push(`${EMOJI[k]} ${k} (IIRS ${p(s.iirs)})`);
+  });
+
+  if(!signals.length) signals.push('• Tidak ada sinyal kritis yang menonjol pada periode ini');
+
+  // ── Bagian 2: Protokol aktif
+  let protoTxt = '';
+  if(protos.crisis.length)  protoTxt += `  🚨 TIER 3 CRISIS  : ${protos.crisis.join(', ')}\n     CMC diaktifkan. Gubernur BI sebagai jubir utama. Holding statement ≤2 jam. Koordinasi KSSK.\n\n`;
+  if(protos.siaga.length)   protoTxt += `  ⚠️  TIER 2 SIAGA   : ${protos.siaga.join(', ')}\n     Eskalasi ke Kasatker DKom & substansi. Brief 3 jam. Influencer aktif. Monitor per 3 jam.\n\n`;
+  if(protos.sedang.length)  protoTxt += `  ⚠️  TIER 2 SEDANG  : ${protos.sedang.join(', ')}\n     Joint issue brief ke Kepala Grup DKom ≤12 jam. RDGM. Paid promotion diperbesar. Influencer selektif.\n\n`;
+  if(protos.ringan.length)  protoTxt += `  ✅ TIER 1 RINGAN  : ${protos.ringan.join(', ')}\n     Monitoring mingguan. Konten organik edukatif. Taklimat Media 2x/bln. Paid promotion ringan.\n\n`;
+
+  return `${PAD}
+🤖 KONTEKS KONSULTASI EWS KOMUNIKASI BI — ${periode}
+${PAD}
+
+Kamu adalah konsultan senior Komunikasi Kebijakan Bank Indonesia dengan keahlian dalam:
+manajemen risiko reputasi institusi bank sentral, strategi komunikasi publik, analisis
+sentimen media digital, dan penyusunan narasi kebijakan moneter berbasis data.
+
+${pad}
+1. LATAR BELAKANG SISTEM EWS KOMUNIKASI BI
+${pad}
+Bank Indonesia (BI) mengoperasikan Early Warning System (EWS) Komunikasi Kebijakan
+untuk memantau dan merespons risiko reputasi atas kebijakan moneter secara proaktif.
+Sistem ini memantau tiga klaster isu kebijakan utama:
+  • Rupiah   — persepsi publik atas nilai tukar & stabilitas mata uang
+  • Inflasi  — persepsi atas laju inflasi & daya beli masyarakat
+  • BI-Rate  — persepsi atas keputusan suku bunga acuan BI
+
+Data bersumber dari dua vendor pemantau:
+  • NoLimit Indonesia  (bobot 40%) — Kanal RESMI BI: media sosial BI, website, siaran pers.
+    Mengukur efektivitas komunikasi BI ke publiknya sendiri.
+  • Sentrix Telkomsel  (bobot 60%) — Kanal NON-BI: media massa, media sosial publik, forum.
+    Merepresentasikan persepsi publik eksternal & risiko reputasi sesungguhnya.
+
+${pad}
+2. METODOLOGI IIRS (Issue Intensity Risk Score, skala 0–100)
+${pad}
+IIRS = 0,40 × Source Score(NoLimit) + 0,60 × Source Score(Sentrix)
+
+Source Score = 100 × [ 0,40 × NS  +  0,30 × VA  +  0,30 × ER ]
+
+  • NS (Negative Sentiment)  — proporsi konten bersentimen negatif terhadap klaster isu
+  • VA (Volume Anomaly)      — rasio lonjakan volume konten di atas baseline normal;
+                               sinyal leading indicator perhatian publik yang meningkat
+  • ER (Exposure & Reach)    — rasio jangkauan konten ke audiens; mengukur seberapa luas
+                               isu menyebar. ER 100% = saturasi/jangkauan maksimal
+
+Threshold tier & implikasinya:
+  • IIRS  0–35  = Tier 1 RINGAN   → Terkendali. Monitoring rutin, edukasi proaktif
+  • IIRS 36–49  = Tier 2 SEDANG   → Sentimen naik, respons terstruktur (SLA 12 jam)
+  • IIRS 50–59  = Tier 2 SIAGA    → Risiko tinggi, respons dipercepat (SLA 6 jam)
+  • IIRS ≥ 60   = Tier 3 CRISIS   → Krisis. CMC diaktifkan, Gubernur BI sebagai jubir (SLA 6 jam)
+
+${pad}
+3. KERANGKA RESPONS — TCRP (Tiered Communication Response Protocol)
+${pad}
+Setiap tier memiliki rantai eskalasi, tim, pesan, dan kanal yang berbeda:
+
+TIER 1 RINGAN  → Proactive Education. Konten organik evergreen. Paid promotion ringan.
+  Program rutin: Taklimat Media 2x/bln · Training Wartawan 3x/bln · FGD Akademisi 6x/thn.
+  Evaluasi: Bulanan oleh Kepala Divisi DKom.
+
+TIER 2 SEDANG  → Klarifikasi reaktif + edukasi tematik intensif. Joint issue brief ≤12 jam.
+  Eskalasi: Kepala Grup → Kepala Satker DKom → RDGM.
+  Paid promotion diperbesar. Influencer/KOL mulai diaktifkan selektif. Clipper selektif.
+  Validasi substansi: DKEM (Rupiah) / DKMP (Inflasi) / DKSP (BI-Rate) — mandatory untuk
+  talking head & official statement.
+
+TIER 2 SIAGA   → Respons intensif. Joint issue brief ≤3 jam. Eskalasi ke Kasatker DKom.
+  Influencer KOL aktif penuh. Monitor IIRS per 3 jam. RDGM khusus.
+  Siapkan contingency brief Tier 3.
+
+TIER 3 CRISIS  → CMC (Crisis Management Committee) diaktifkan.
+  Jubir berlapis: Gubernur BI (Layer 1) → ADG Bidang / Chair CMC (Layer 2) → Kasatker DKom (Layer 3).
+  Holding statement ≤2 jam → Press conference Gubernur → Klarifikasi penuh + data empiris.
+  Saturasi 6 kanal BI (Web, IG, X, YT, TikTok, LinkedIn). Paid promotion maksimal.
+  Koalisi influencer + clipper + homeless media. Koordinasi KSSK (Kemenkeu, OJK, LPS) +
+  DPR Komisi XI. Post-mortem wajib dalam 7 hari pasca de-eskalasi.
+
+Satker yang terlibat dalam respons komunikasi:
+  • DP2K   — Analisis & intelligence: monitoring IIRS, narasi dominan, laporan situasional
+  • DLIPKD — Produksi konten digital di seluruh kanal BI
+  • DROM   — Relasi media & jurnalis
+  • TRPI   — Cascading pesan ke 46 Kantor Perwakilan Dalam Negeri (KPwDN)
+  • DRLP2  — Jejaring akademisi, opinion leader, Key Opinion Leaders (KOL)
+  • DKEM/DKMP/DKSP — Satker substansi: validasi keakuratan teknis konten kebijakan
+
+${PAD}
+4. DATA EWS AKTUAL — PERIODE ${periode}
+${PAD}
+
+IIRS & Komponen Source Score per Klaster:
+${iirsTxt.trimEnd()}
+
+Sinyal Kritis yang Perlu Diperhatikan:
+${signals.join('\n')}
+
+Protokol Respons yang Aktif:
+${protoTxt.trimEnd()}
+
+${pad}
+5. PANDUAN DISKUSI
+${pad}
+Dengan konteks di atas, kamu dapat membantu saya mendiskusikan hal-hal seperti:
+  • Prioritas respons komunikasi: klaster mana yang paling mendesak & mengapa?
+  • Rancangan narasi & pesan kunci untuk target audiens tertentu (publik umum, media,
+    akademisi, pelaku pasar, DPR) per klaster isu
+  • Strategi antisipasi eskalasi — mencegah Rupiah atau klaster lain masuk Siaga/Crisis
+  • Pemilihan kanal komunikasi yang tepat berdasarkan profil sentimen & jangkauan
+  • Evaluasi efektivitas respons komunikasi yang sedang berjalan
+  • Rekomendasi konkret untuk langkah 1–7 hari ke depan
+  • Atau topik lain seputar EWS & strategi komunikasi kebijakan BI
+
+Apa yang ingin kamu diskusikan atau tanyakan?`;
+}
 
 function openAI() {
   document.getElementById('aiOverlay').classList.add('open');
-  document.getElementById('aiPromptBox').textContent = AI_PROMPT;
+  const sc = _aiSC || _AI_STATIC.sc;
+  const periode = _aiSC ? _aiPeriode : _AI_STATIC.periode;
+  const ctx = buildAIContext(sc, periode);
+  document.getElementById('aiPromptBox').textContent = ctx;
 }
 function closeAI() {
   document.getElementById('aiOverlay').classList.remove('open');
 }
 function copyPrompt() {
-  navigator.clipboard.writeText(AI_PROMPT).then(() => {
+  const sc = _aiSC || _AI_STATIC.sc;
+  const periode = _aiSC ? _aiPeriode : _AI_STATIC.periode;
+  const ctx = buildAIContext(sc, periode);
+  navigator.clipboard.writeText(ctx).then(() => {
     const btn = document.getElementById('aiCopyBtn');
     btn.classList.add('copied');
     btn.innerHTML = '✅ Tersalin!';
     setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 Salin Konteks EWS'; }, 2000);
   });
 }
-// defer until DOM fully parsed (aiOverlay is placed after this script block)
+// defer until DOM fully parsed
 window.addEventListener('DOMContentLoaded', function(){
   const _ov = document.getElementById('aiOverlay');
   if (_ov) _ov.addEventListener('click', function(e){ if (e.target === this) closeAI(); });
@@ -1862,6 +2022,8 @@ function applyLiveData(data){
   if(sc&&Object.keys(sc).length){
     rnIIRSGrid(sc); rnScaleBar(sc); rnExecPara(sc,info.periode);
     rnSourceScoreTable(sc); rnSignalGrid(sc); rnProtoGrid(sc);
+    // Simpan ke global untuk AI context dinamis
+    _aiSC = sc; _aiPeriode = info.periode;
   }
   if(kw) setTimeout(()=>rnWordCloudsLive(kw),350);
   if(nar) rnNarasiLive(nar);
@@ -1987,9 +2149,12 @@ function downloadTemplate(){
       <button class="ai-close" onclick="closeAI()">✕</button>
     </div>
     <div class="ai-modal-body">
-      <div class="ai-ctx-label">📋 Konteks EWS April 2026 — Salin & tempel ke AI pilihanmu</div>
+      <div class="ai-ctx-label">📋 Konteks EWS Lengkap — Salin seluruh teks ini, tempel ke AI pilihanmu, lalu ajukan pertanyaanmu</div>
       <div class="ai-ctx-box" id="aiPromptBox"></div>
       <button class="ai-copy-btn" id="aiCopyBtn" onclick="copyPrompt()">📋 Salin Konteks EWS</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6">
+        💡 <strong>Cara pakai:</strong> Klik "Salin Konteks EWS" → Buka AI di tab baru → Tempel (Ctrl+V) → Tambahkan pertanyaanmu di akhir teks, lalu kirim.
+      </div>
 
       <hr class="ai-divider">
       <div class="ai-tools-label">🚀 Buka AI di tab baru — lalu tempel konteks di atas</div>
