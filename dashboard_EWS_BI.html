@@ -312,26 +312,18 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0}
   <!-- ── EWS UPLOAD CARD ── -->
   <div id="ews-upload-card" class="ews-upload-card" style="margin-top:18px">
     <div class="upload-row">
-      <div class="upload-icon-lg">📊</div>
-      <div>
-        <div class="upload-title">Aktivasi Dashboard dengan Data Excel Anda</div>
-        <div class="upload-sub">Upload satu atau lebih file Excel (multi-file). Dashboard akan otomatis memuat data IIRS, keyword, dan narasi sesuai data aktual periode baru.</div>
+      <div class="upload-icon-lg">🔄</div>
+      <div style="flex:1">
+        <div class="upload-title">Perbarui Dashboard dengan Data Periode Baru</div>
+        <div class="upload-sub">Dashboard ini dapat diperbarui kapan saja. Upload file Excel data sentimen, IIRS, Source Score, Narasi, VA, ER periode berikutnya — seluruh isi dashboard akan menyesuaikan otomatis.</div>
       </div>
       <div class="upload-btns">
         <input type="file" id="ews-file-input" multiple accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(this.files)">
-        <button class="btn-upload" onclick="document.getElementById('ews-file-input').click()">📂 Pilih File Excel</button>
-        <button class="btn-tmpl" onclick="downloadTemplate()">⬇ Download Template</button>
+        <button class="btn-upload" onclick="document.getElementById('ews-file-input').click()">📂 Upload Data Excel</button>
       </div>
     </div>
     <div id="ews-upload-status" class="ews-upload-status"></div>
     <div id="ews-file-list" style="display:none;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
-    <div class="sheet-pills">
-      <span class="sheet-pill"><strong>INFO</strong> — Periode &amp; Bobot Vendor</span>
-      <span class="sheet-pill"><strong>SOURCE_SCORE</strong> — KLASTER · VENDOR · NS · VA · ER</span>
-      <span class="sheet-pill"><strong>KEYWORD</strong> — KLASTER · KEYWORD · FREKUENSI</span>
-      <span class="sheet-pill"><strong>NARASI</strong> — KLASTER · TEKS</span>
-      <span class="sheet-pill"><strong>DATASET</strong> — KLASTER · VENDOR · JUMLAH</span>
-    </div>
   </div>
 
   <!-- EXECUTIVE BRIEF PARAGRAPH -->
